@@ -75,8 +75,8 @@ def get_ticker_data(ticker, idx_df, bin_path):
 
 def main():
     # --- EXECUTION ---
-    idx_path = 'extra/taq/taq1993/CQ9301.IDX.lz4'
-    bin_path = 'extra/taq/taq1993/CQ9301.BIN.lz4'
+    idx_path = 'data/raw/taq/1993/CQ9301.IDX.lz4'
+    bin_path = 'data/raw/taq/1993/CQ9301.BIN.lz4'
     output_path = 'data/interim/taq/1993/aa_01.parquet'
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

@@ -11,6 +11,7 @@ class TaqType(StrEnum):
 
 
 class TaqMonth(BaseModel):
+    root_path: str
     date: dt.date
     type: TaqType
     
@@ -25,9 +26,9 @@ class TaqMonth(BaseModel):
     @computed_field
     @property
     def idx_path(self) -> Path:
-        return f"{self.__get_base_path()}.IDX.lz4"
+        return f"{self.root_path}/{self.__get_base_path()}.IDX.lz4"
     
     @computed_field
     @property
     def bin_path(self) -> Path:
-        return f"{self.__get_base_path()}.BIN.lz4"
+        return f"{self.root_path}/{self.__get_base_path()}.BIN.lz4"

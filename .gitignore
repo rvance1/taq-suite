@@ -1,0 +1,62 @@
+# --- uv & Virtual Environments ---
+.venv/
+.python-version
+# uv.lock is usually committed for apps, but ignore if you prefer
+# uv.lock 
+
+# --- Python & Bytecode ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# --- Distribution / Packaging ---
+dist/
+build/
+*.egg-info/
+*.egg
+nosetests.xml
+pip-wheel-metadata/
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# --- Testing & Coverage ---
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+htmlcov/
+.cache
+nosetests.xml
+coverage.xml
+
+# --- Environment Variables (CRITICAL for security) ---
+.env
+.venv
+*.env
+.secret
+
+# --- IDEs & Editors ---
+.vscode/
+# (Optional: keep .vscode/settings.json if you want shared team settings)
+.idea/
+*.swp
+*.swo
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Large Data/Logs ---
+*.log
+data/
+# If you are working with TAQ or CRSP data, definitely ignore these:
+*.csv
+*.sas7bdat
+*.parquet

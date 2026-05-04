@@ -8,4 +8,5 @@ dependencies = [
     "lz4>=4.4.5",
     "numpy>=2.4.4",
     "polars>=1.40.1",
+    "pydantic>=2.13.3",
 ]

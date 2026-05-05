@@ -4,9 +4,9 @@ import lz4
 import numpy as np
 import polars as pl
 
-from dal.models.database import Database
-from dal.models.taq_month import TaqMonth, TaqType
-from dal.models.byte_schema import idx_dtype, bin_dtype
+from taq_backtester.dal.models.database import Database
+from taq_backtester.dal.models.taq_month import TaqMonth, TaqType
+from taq_backtester.dal.models.byte_schema import idx_dtype, bin_dtype
 
 
 class RawTaqDao(BaseModel):

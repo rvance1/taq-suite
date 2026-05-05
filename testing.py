@@ -7,8 +7,8 @@ dao = RawTaqDao(database=database)
 
 
 date = dt.date(1993, 1, 1)
-df = dao.load_ticker_data(
-    ticker="AA",
+df = dao.load_taq_index(
+    #ticker="AA",
     date=date,
     type="CQ"
 )

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 import datetime as dt
-import lz4
+import lz4.frame
 import numpy as np
 import polars as pl
 

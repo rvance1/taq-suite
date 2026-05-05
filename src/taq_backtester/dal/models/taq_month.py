@@ -1,7 +1,7 @@
 import datetime as dt
 from enum import StrEnum
 from pathlib import Path
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, FilePath, computed_field
 
 
 class TaqType(StrEnum):
@@ -25,10 +25,10 @@ class TaqMonth(BaseModel):
     
     @computed_field
     @property
-    def idx_path(self) -> Path:
-        return f"{self.root_path}/{self.__get_base_path()}.IDX.lz4"
+    def idx_path(self) -> FilePath:
+        return Path(f"{self.root_path}/{self.__get_base_path()}.IDX.lz4")
     
     @computed_field
     @property
-    def bin_path(self) -> Path:
-        return f"{self.root_path}/{self.__get_base_path()}.BIN.lz4"
+    def bin_path(self) -> FilePath:
+        return Path(f"{self.root_path}/{self.__get_base_path()}.BIN.lz4")

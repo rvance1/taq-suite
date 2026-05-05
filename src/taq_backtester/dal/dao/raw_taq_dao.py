@@ -3,6 +3,8 @@ import datetime as dt
 import lz4.frame
 import numpy as np
 import polars as pl
+from tqdm import tqdm
+from pathlib import Path
 
 from taq_backtester.dal.models.database import Database
 from taq_backtester.dal.models.taq_month import TaqMonth, TaqType
@@ -25,50 +27,67 @@ class RawTaqDao(BaseModel):
         return pl.DataFrame({
             "ticker": [t.decode('latin-1').strip() for t in idx_data['ticker']],
             "date": idx_data['date'],
-            "start": idx_data['start'],
+            "start_idx": idx_data['start_idx'],
             "end_idx": idx_data['end_idx']
-        })
+        }).with_columns(
+            pl.col("date")
+            .cast(pl.String) 
+            .str.pad_start(6, "0")  
+            .str.to_date(format="%y%m%d") 
+            .alias("date")
+        )
     
-    def load_ticker_data(self, ticker: str, date: dt.date, type: TaqType) -> pl.DataFrame:
+    def load_data_for_day(self, date: dt.date, type: TaqType) -> pl.DataFrame:
         taq_month = self.get_taq_month(date, type)
         idx_df = self.load_taq_index(date, type)
-        meta = idx_df.filter(pl.col("ticker") == ticker)
+        meta = idx_df.filter(pl.col("date") == date)
         if meta.is_empty():
             return pl.DataFrame()
         
-        row = meta.row(0)
-        date_int = row[1]
-        start_idx = row[2]
-        end_idx = row[3]
-        
-        num_records = end_idx - start_idx + 1
-        
-        start_byte = (start_idx - 1) * 23 if start_idx > 0 else 0
-        read_size = num_records * 23
-        
-        with lz4.frame.open(taq_month.bin_path, 'rb') as f:
-            try:
-                f.seek(start_byte)
-                raw_bin = f.read(read_size)
-            except (AttributeError, IOError):
-                f.read(start_byte)
-                raw_bin = f.read(read_size)
+        dfs = []
+        for i in tqdm(range(meta.height)):
+            row = meta.row(i)
+            ticker = row[0]
+            date_int = row[1]
+            start_idx = row[2]
+            end_idx = row[3]
+            
+            num_records = end_idx - start_idx + 1
+            
+            start_byte = (start_idx - 1) * 23 if start_idx > 0 else 0
+            read_size = num_records * 23
+            
+            with lz4.frame.open(taq_month.bin_path, 'rb') as f:
+                try:
+                    f.seek(start_byte)
+                    raw_bin = f.read(read_size)
+                except (AttributeError, IOError):
+                    f.read(start_byte)
+                    raw_bin = f.read(read_size)
 
-        bin_np = np.frombuffer(raw_bin, dtype=bin_dtype)
+            bin_np = np.frombuffer(raw_bin, dtype=bin_dtype)
+            
+            df = pl.DataFrame({
+                "date": [date_int] * len(bin_np),
+                "time": bin_np['time'],
+                "bid": bin_np['bid'] / 100000.0,
+                "ask": bin_np['ask'] / 100000.0,
+                "bid_size": bin_np['bid_size'],
+                "ask_size": bin_np['ask_size'],
+                "seq": bin_np['seq'],
+                "mode": bin_np['mode'],
+                "ex": [e.decode('latin-1') for e in bin_np['ex']],
+                "ticker": [ticker] * len(bin_np)
+            })
+            dfs.append(df)
         
-        return pl.DataFrame({
-            "date": [date_int] * len(bin_np),
-            "time": bin_np['time'],
-            "bid": bin_np['bid'] / 100000.0,
-            "ask": bin_np['ask'] / 100000.0,
-            "bid_size": bin_np['bid_size'],
-            "ask_size": bin_np['ask_size'],
-            "seq": bin_np['seq'],
-            "mode": bin_np['mode'],
-            "ex": [e.decode('latin-1') for e in bin_np['ex']],
-            "ticker": [ticker] * len(bin_np)
-        })
-    
-    def write_ticker_df(self, ticker: str, date: dt.date, df: pl.DataFrame) -> None:
-        path = self.database.get_interim_path() + f"/taq/{date.year}/{ticker}_{date.month:02d}.parquet"
-        df.to_parquet(path)
+        return pl.concat(dfs)
+        
+    def write_file_for_day(self, date: dt.date, df: pl.DataFrame, taq_type: TaqType) -> None:
+        
+        path = Path(f"{self.database.get_interim_path()}/taq/{taq_type.value}/{date.year}/{date.month:02d}/{date.strftime("%Y%m%d")}.parquet")
+        if not self.database.is_connected():
+            return ValueError("Database is not connected")
+        
+        path.parent.mkdir(parents=True, exist_ok=True)
+        df.write_parquet(path)

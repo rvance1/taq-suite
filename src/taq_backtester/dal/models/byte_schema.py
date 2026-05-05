@@ -4,7 +4,7 @@ import numpy as np
 idx_dtype = np.dtype([
     ('ticker',  'S10'),
     ('date',    '<i4'), 
-    ('start',   '<i4'), 
+    ('start_idx',   '<i4'), 
     ('end_idx', '<i4')  
 ])
 

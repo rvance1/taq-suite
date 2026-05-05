@@ -68,3 +68,7 @@ class RawTaqDao(BaseModel):
             "ex": [e.decode('latin-1') for e in bin_np['ex']],
             "ticker": [ticker] * len(bin_np)
         })
+    
+    def write_ticker_df(self, ticker: str, date: dt.date, df: pl.DataFrame) -> None:
+        path = self.database.get_interim_path() + f"/taq/{date.year}/{ticker}_{date.month:02d}.parquet"
+        df.to_parquet(path)

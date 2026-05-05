@@ -11,8 +11,18 @@ class Database(BaseModel):
     
     def is_connected(self) -> bool:
         return self.root_path is not None
+
+    def get_raw_taq_path(self) -> str:
+        if not self.is_connected():
+            raise ValueError("Database is not connected")
+        return f"{self.root_path}/raw"
+    
+    def get_interim_path(self) -> str:
+        if not self.is_connected():
+            raise ValueError("Database is not connected")
+        return f"{self.root_path}/interim"
     
     def get_taq_month(self, date: dt.date, type: TaqType) -> TaqMonth:
         if not self.is_connected():
             raise ValueError("Database is not connected")
-        return TaqMonth(root_path=self.root_path, date=date, type=type)
+        return TaqMonth(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type)

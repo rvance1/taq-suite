@@ -20,9 +20,9 @@ class TaqFile(BaseModel):
         y = self.date.year
         m = self.date.month
         if self.date < dt.date(1999, 12, 1):
-            return f"{y}/{self.type}{y % 100:02d}{m:02d}"
+            return f"taq{y}/{self.type}{y % 100:02d}{m:02d}"
         else:
-            return f"{y}/{self.type[-1]}{y}{m:02d}"
+            return f"taq{y}/{self.type[-1]}{y}{m:02d}"
     
     def __create_base_path(self) -> str:
         if self.date.year > 1995:

@@ -25,4 +25,4 @@ class Database(BaseModel):
     def get_taq_file(self, date: dt.date, type: TaqType) -> TaqFile:
         if not self.is_connected():
             raise ValueError("Database is not connected")
-        return TaqFile(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type)
+        return TaqFile(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type, letter="A")

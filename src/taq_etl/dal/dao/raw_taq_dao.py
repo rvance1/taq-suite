@@ -3,7 +3,6 @@ import datetime as dt
 import lz4.frame
 import numpy as np
 import polars as pl
-from tqdm import tqdm
 from pathlib import Path
 
 from taq_etl.dal.models.database import Database
@@ -37,6 +36,18 @@ class RawTaqDao(BaseModel):
             .alias("date")
         )
     
+    def detect_record_size(self, bin_path: Path, total_records: int) -> int:
+        """Calculates the exact byte size of a single record for a given day."""
+        with lz4.frame.open(bin_path, 'rb') as f:
+            raw_bytes = f.read()
+            
+        total_bytes = len(raw_bytes)
+        
+        if total_bytes % total_records != 0:
+            raise ValueError(f"Corrupted data or missing records: {total_bytes} bytes does not divide evenly by {total_records} records.")
+            
+        return total_bytes // total_records
+    
     def load_data_for_day(self, date: dt.date, type: TaqType) -> pl.DataFrame:
         taq_file = self.get_taq_file(date, type)
         idx_df = self.load_taq_index(date, type)
@@ -50,8 +61,10 @@ class RawTaqDao(BaseModel):
         max_idx = meta["end_idx"].max()
         total_records = max_idx - min_idx + 1
         
-        start_byte = (min_idx - 1) * 23 if min_idx > 0 else 0
-        read_size = total_records * 23
+        record_size = self.detect_record_size(taq_file.bin_path, total_records)
+        
+        start_byte = (min_idx - 1) * record_size if min_idx > 0 else 0
+        read_size = total_records * record_size
 
         with lz4.frame.open(taq_file.bin_path, 'rb') as f:
             try:

@@ -3,7 +3,7 @@ import datetime as dt
 import polars as pl
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
-from taq_backtester import RawTaqDao, Database, TaqType
+from taq_etl import RawTaqDao, Database, TaqType
 
 os.environ["POLARS_MAX_THREADS"] = "2"
 
@@ -26,7 +26,7 @@ def process_single_day(date):
 if __name__ == "__main__":
     # 1. Define your date range
     start_date = dt.date(1993, 1, 4)
-    end_date = dt.date(1993, 1, 10)
+    end_date = dt.date(1993, 1, 19)
     date_list = []
     
     curr = start_date

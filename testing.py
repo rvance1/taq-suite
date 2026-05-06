@@ -1,4 +1,4 @@
-from taq_backtester import RawTaqDao, Database, TaqType
+from taq_etl import RawTaqDao, Database, TaqType
 
 import datetime as dt
 import polars as pl
@@ -12,7 +12,10 @@ date = dt.date(1993, 1, 4)
 df = dao.load_data_for_day(
     #ticker="AA",
     date=date,
-    type=TaqType.QUOTE
+    type=TaqType.TRADE
 )
-dao.write_file_for_day(date=date, df=df, taq_type=TaqType.QUOTE)
-print("Success!")
+if df.is_empty():
+    print("No data for this day.")
+else:
+    dao.write_file_for_day(date=date, df=df, taq_type=TaqType.TRADE)
+    print("Success!")

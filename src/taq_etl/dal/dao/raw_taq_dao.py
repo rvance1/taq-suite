@@ -6,9 +6,9 @@ import polars as pl
 from tqdm import tqdm
 from pathlib import Path
 
-from taq_backtester.dal.models.database import Database
-from taq_backtester.dal.models.taq_month import TaqMonth, TaqType
-from taq_backtester.dal.models.byte_schema import idx_dtype, bin_dtype
+from taq_etl.dal.models.database import Database
+from taq_etl.dal.models.taq_month import TaqMonth, TaqType
+from taq_etl.dal.models.byte_schema import idx_dtype, bin_dtype
 
 
 class RawTaqDao(BaseModel):
@@ -41,7 +41,6 @@ class RawTaqDao(BaseModel):
         taq_month = self.get_taq_month(date, type)
         idx_df = self.load_taq_index(date, type)
         
-        # Sort by start_idx to ensure we read chronologically
         meta = idx_df.filter(pl.col("date") == date).sort("start_idx")
         
         if meta.is_empty():
@@ -65,28 +64,38 @@ class RawTaqDao(BaseModel):
 
         bin_np = np.frombuffer(raw_bin, dtype=bin_dtype)
         
-        # 3. Use numpy to magically assign tickers to rows without loops
+        # Use numpy to magically assign tickers to rows without loops
         # This repeats each ticker string exactly (end - start + 1) times
         counts = (meta["end_idx"] - meta["start_idx"] + 1).to_numpy()
         tickers = meta["ticker"].to_numpy()
         ticker_col = np.repeat(tickers, counts)
         
-        # Extract the integer date representation directly from the original logic
-        date_int = int(date.strftime("%y%m%d")) 
-        
-        # 4. Construct the Polars DataFrame once
-        return pl.DataFrame({
-            "date": np.full(len(bin_np), date_int, dtype=np.int32),
-            "time": bin_np['time'],
-            "bid": bin_np['bid'] / 100000.0,
-            "ask": bin_np['ask'] / 100000.0,
-            "bid_size": bin_np['bid_size'],
-            "ask_size": bin_np['ask_size'],
-            "seq": bin_np['seq'],
-            "mode": bin_np['mode'],
-            "ex": [e.decode('latin-1') for e in bin_np['ex']], 
-            "ticker": ticker_col
+        packed_data = pl.DataFrame({
+                "date": [date] * len(bin_np),
+                "ticker": ticker_col,
+                "time": bin_np['time'],
+                "bid": bin_np['bid'] / 100000.0,
+                "ask": bin_np['ask'] / 100000.0,
+                "bid_size": bin_np['bid_size'],
+                "ask_size": bin_np['ask_size'],
+                "seq": bin_np['seq'],
+                "mode": bin_np['mode'],
+                "ex": [e.decode('latin-1') for e in bin_np['ex']], 
         })
+
+        return (
+            packed_data
+            .with_columns(
+                (
+                    pl.col("date").cast(pl.Datetime) + pl.duration(seconds=pl.col("time"))
+                )
+                .alias("datetime")
+            )
+            .select(
+                "datetime", 
+                pl.all().exclude(["datetime", "date", "time"])
+            )
+        )
         
     def write_file_for_day(self, date: dt.date, df: pl.DataFrame, taq_type: TaqType) -> None:
         

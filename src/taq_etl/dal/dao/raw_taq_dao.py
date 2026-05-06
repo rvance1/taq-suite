@@ -7,7 +7,31 @@ from pathlib import Path
 
 from taq_etl.dal.models.database import Database
 from taq_etl.dal.models.taq_file import TaqFile, TaqType
-from taq_etl.dal.models.byte_schema import idx_dtype, bin_dtype
+from taq_etl.dal.models.byte_schema import idx_dtype
+
+
+BIN_DTYPE_23 = np.dtype([
+    ('time',     '<i4'),
+    ('bid',      '<i4'),
+    ('ask',      '<i4'),
+    ('seq',      '<i4'),
+    ('bid_size', '<i2'),
+    ('ask_size', '<i2'),
+    ('mode',     '<i2'),
+    ('ex',       'S1'),
+])
+
+BIN_DTYPE_27 = np.dtype([
+    ('time',     '<i4'),
+    ('bid',      '<i4'),
+    ('ask',      '<i4'),
+    ('seq',      '<i4'),
+    ('bid_size', '<i2'),
+    ('ask_size', '<i2'),
+    ('mode',     '<i2'),
+    ('ex',       'S1'),
+    ('extra',    'S4'),
+])
 
 
 class RawTaqDao(BaseModel):
@@ -36,12 +60,14 @@ class RawTaqDao(BaseModel):
             .alias("date")
         )
     
-    def detect_record_size(self, bin_path: Path, total_records: int) -> int:
+    def detect_record_size(self, bin_path: Path, idx_df: pl.DataFrame) -> int:
         """Calculates the exact byte size of a single record for a given day."""
         with lz4.frame.open(bin_path, 'rb') as f:
             raw_bytes = f.read()
             
         total_bytes = len(raw_bytes)
+        
+        total_records = int((idx_df["end_idx"] - idx_df["start_idx"] + 1).sum())
         
         if total_bytes % total_records != 0:
             raise ValueError(f"Corrupted data or missing records: {total_bytes} bytes does not divide evenly by {total_records} records.")
@@ -61,7 +87,14 @@ class RawTaqDao(BaseModel):
         max_idx = meta["end_idx"].max()
         total_records = max_idx - min_idx + 1
         
-        record_size = self.detect_record_size(taq_file.bin_path, total_records)
+        record_size = self.detect_record_size(taq_file.bin_path, idx_df)
+        
+        if record_size == 23:
+            bin_dtype = BIN_DTYPE_23
+        elif record_size == 27:
+            bin_dtype = BIN_DTYPE_27
+        else:
+            raise ValueError(f"Unexpected record size: {record_size}")
         
         start_byte = (min_idx - 1) * record_size if min_idx > 0 else 0
         read_size = total_records * record_size
@@ -71,14 +104,11 @@ class RawTaqDao(BaseModel):
                 f.seek(start_byte)
                 raw_bin = f.read(read_size)
             except (AttributeError, IOError):
-                # If seek fails, we decompress up to the start byte once
                 f.read(start_byte)
                 raw_bin = f.read(read_size)
 
         bin_np = np.frombuffer(raw_bin, dtype=bin_dtype)
         
-        # Use numpy to magically assign tickers to rows without loops
-        # This repeats each ticker string exactly (end - start + 1) times
         counts = (meta["end_idx"] - meta["start_idx"] + 1).to_numpy()
         tickers = meta["ticker"].to_numpy()
         ticker_col = np.repeat(tickers, counts)

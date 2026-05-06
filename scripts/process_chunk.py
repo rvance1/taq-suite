@@ -25,8 +25,8 @@ def process_single_day(date):
 
 if __name__ == "__main__":
     # 1. Define your date range
-    start_date = dt.date(1993, 1, 4)
-    end_date = dt.date(1993, 1, 19)
+    start_date = dt.date(1993, 1, 1)
+    end_date = dt.date(1993, 1, 31)
     date_list = []
     
     curr = start_date

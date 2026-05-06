@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 import datetime as dt
-from .taq_month import TaqMonth, TaqType
+from .taq_file import TaqFile, TaqType
 
 
 class Database(BaseModel):
@@ -22,7 +22,7 @@ class Database(BaseModel):
             raise ValueError("Database is not connected")
         return f"{self.root_path}/interim"
     
-    def get_taq_month(self, date: dt.date, type: TaqType) -> TaqMonth:
+    def get_taq_file(self, date: dt.date, type: TaqType) -> TaqFile:
         if not self.is_connected():
             raise ValueError("Database is not connected")
-        return TaqMonth(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type)
+        return TaqFile(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type)

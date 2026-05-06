@@ -10,7 +10,7 @@ class TaqType(StrEnum):
     MASTER = "M"
 
 
-class TaqMonth(BaseModel):
+class TaqFile(BaseModel):
     root_path: str
     date: dt.date
     type: TaqType

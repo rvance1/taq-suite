@@ -7,20 +7,20 @@ from tqdm import tqdm
 from pathlib import Path
 
 from taq_etl.dal.models.database import Database
-from taq_etl.dal.models.taq_month import TaqMonth, TaqType
+from taq_etl.dal.models.taq_file import TaqFile, TaqType
 from taq_etl.dal.models.byte_schema import idx_dtype, bin_dtype
 
 
 class RawTaqDao(BaseModel):
     database: Database
 
-    def get_taq_month(self, date: dt.date, type: TaqType) -> TaqMonth:
-        return self.database.get_taq_month(date, type)
+    def get_taq_file(self, date: dt.date, type: TaqType) -> TaqFile:
+        return self.database.get_taq_file(date, type)
     
     def load_taq_index(self, date: dt.date, type: TaqType) -> pl.DataFrame:
         """Loads the TAQ index for a given date and type. Ex: date=dt.date(1998, 1, 1), type=TaqType.QUOTE"""
-        taq_month = self.get_taq_month(date, type)
-        with lz4.frame.open(taq_month.idx_path, 'rb') as f:
+        taq_file = self.get_taq_file(date, type)
+        with lz4.frame.open(taq_file.idx_path, 'rb') as f:
             raw = f.read()
             idx_data = np.frombuffer(raw, dtype=idx_dtype)
             
@@ -38,7 +38,7 @@ class RawTaqDao(BaseModel):
         )
     
     def load_data_for_day(self, date: dt.date, type: TaqType) -> pl.DataFrame:
-        taq_month = self.get_taq_month(date, type)
+        taq_file = self.get_taq_file(date, type)
         idx_df = self.load_taq_index(date, type)
         
         meta = idx_df.filter(pl.col("date") == date).sort("start_idx")
@@ -53,7 +53,7 @@ class RawTaqDao(BaseModel):
         start_byte = (min_idx - 1) * 23 if min_idx > 0 else 0
         read_size = total_records * 23
 
-        with lz4.frame.open(taq_month.bin_path, 'rb') as f:
+        with lz4.frame.open(taq_file.bin_path, 'rb') as f:
             try:
                 f.seek(start_byte)
                 raw_bin = f.read(read_size)

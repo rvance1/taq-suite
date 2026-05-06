@@ -99,7 +99,15 @@ class RawTaqDao(BaseModel):
         
     def write_file_for_day(self, date: dt.date, df: pl.DataFrame, taq_type: TaqType) -> None:
         
-        path = Path(f"{self.database.get_interim_path()}/taq/{taq_type.value}/{date.year}/{date.month:02d}/{date.strftime("%Y%m%d")}.parquet")
+        match taq_type:
+            case TaqType.QUOTE:
+                folder = "quote"
+            case TaqType.TRADE:
+                folder = "trade"
+            case TaqType.MASTER:
+                folder = "master"
+
+        path = Path(f"{self.database.get_interim_path()}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y%m%d")}.parquet")
         if not self.database.is_connected():
             return ValueError("Database is not connected")
         

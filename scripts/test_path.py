@@ -1,4 +1,4 @@
-from taq_etl import RawTaqDao, Database, TaqFile, TaqType
+from taq_etl import RawTaqDao, Database, TaqType
 from pathlib import Path
 
 import datetime as dt

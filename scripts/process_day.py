@@ -1,7 +1,6 @@
 from taq_etl import RawTaqDao, Database, TaqType
 
 import datetime as dt
-import polars as pl
 
 database = Database(root_path="data")
 dao = RawTaqDao(database=database)

@@ -17,7 +17,7 @@ def process_single_day(date):
     
     try:
         df = dao.load_data_for_day(date=date, type=TaqType.QUOTE)
-        if df is not None:
+        if not df.is_empty():
             dao.write_file_for_day(date=date, df=df, taq_type=TaqType.QUOTE)
         return f"Done: {date}"
     except Exception as e:

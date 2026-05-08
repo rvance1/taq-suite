@@ -7,31 +7,7 @@ from pathlib import Path
 
 from taq_etl.dal.models.database import Database
 from taq_etl.dal.models.taq_file import TaqFile, TaqType
-from taq_etl.dal.models.byte_schema import idx_dtype
-
-
-BIN_DTYPE_23 = np.dtype([
-    ('time',     '<i4'),
-    ('bid',      '<i4'),
-    ('ask',      '<i4'),
-    ('seq',      '<i4'),
-    ('bid_size', '<i2'),
-    ('ask_size', '<i2'),
-    ('mode',     '<i2'),
-    ('ex',       'S1'),
-])
-
-BIN_DTYPE_27 = np.dtype([
-    ('time',     '<i4'),
-    ('bid',      '<i4'),
-    ('ask',      '<i4'),
-    ('seq',      '<i4'),
-    ('bid_size', '<i2'),
-    ('ask_size', '<i2'),
-    ('mode',     '<i2'),
-    ('ex',       'S1'),
-    ('extra',    'S4'),
-])
+from taq_etl.dal.models.byte_schema import get_bin_dtype, IDX_DTYPE
 
 
 class RawTaqDao(BaseModel):
@@ -45,7 +21,7 @@ class RawTaqDao(BaseModel):
         taq_file = self.get_taq_file(date, type)
         with lz4.frame.open(taq_file.idx_path, 'rb') as f:
             raw = f.read()
-            idx_data = np.frombuffer(raw, dtype=idx_dtype)
+            idx_data = np.frombuffer(raw, dtype=IDX_DTYPE)
             
         return pl.DataFrame({
             "ticker": [t.decode('latin-1').strip() for t in idx_data['ticker']],
@@ -88,14 +64,9 @@ class RawTaqDao(BaseModel):
         total_records = max_idx - min_idx + 1
         
         record_size = self.detect_record_size(taq_file.bin_path, idx_df)
-        
-        if record_size == 23:
-            bin_dtype = BIN_DTYPE_23
-        elif record_size == 27:
-            bin_dtype = BIN_DTYPE_27
-        else:
-            raise ValueError(f"Unexpected record size: {record_size}")
-        
+
+        bin_dtype = get_bin_dtype(type, record_size)
+
         start_byte = (min_idx - 1) * record_size if min_idx > 0 else 0
         read_size = total_records * record_size
 
@@ -108,12 +79,25 @@ class RawTaqDao(BaseModel):
                 raw_bin = f.read(read_size)
 
         bin_np = np.frombuffer(raw_bin, dtype=bin_dtype)
-        
+
         counts = (meta["end_idx"] - meta["start_idx"] + 1).to_numpy()
         tickers = meta["ticker"].to_numpy()
         ticker_col = np.repeat(tickers, counts)
-        
-        packed_data = pl.DataFrame({
+
+        if type == TaqType.TRADE:
+            packed_data = pl.DataFrame({
+                "date": [date] * len(bin_np),
+                "ticker": ticker_col,
+                "time": bin_np['time'],
+                "price": bin_np['price'] / 100000.0,
+                "volume": bin_np['volume'],
+                "seq": bin_np['seq'],
+                "cond": bin_np['cond'],
+                "sale": [s.decode('latin-1') for s in bin_np['sale']],
+                "ex": [e.decode('latin-1') for e in bin_np['ex']],
+            })
+        else:
+            packed_data = pl.DataFrame({
                 "date": [date] * len(bin_np),
                 "ticker": ticker_col,
                 "time": bin_np['time'],
@@ -123,9 +107,9 @@ class RawTaqDao(BaseModel):
                 "ask_size": bin_np['ask_size'],
                 "seq": bin_np['seq'],
                 "mode": bin_np['mode'],
-                "ex": [e.decode('latin-1') for e in bin_np['ex']], 
-        })
-
+                "ex": [e.decode('latin-1') for e in bin_np['ex']],
+            })
+            
         return (
             packed_data
             .with_columns(

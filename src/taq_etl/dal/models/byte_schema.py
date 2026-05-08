@@ -1,21 +1,64 @@
 import numpy as np
+from .taq_file import TaqType
+
+def get_bin_dtype(type: TaqType, record_size: int) -> np.dtype:
+
+    if type == TaqType.TRADE:
+        match record_size:
+            case 22:
+                return T_BIN_DTYPE_22
+            case _:
+                raise ValueError(f"Unexpected record size: {record_size}")
+    elif type == TaqType.QUOTE:
+        match record_size:
+            case 23:
+                return Q_BIN_DTYPE_23
+            case 27:
+                return Q_BIN_DTYPE_27
+            case _:
+                raise ValueError(f"Unexpected record size: {record_size}")
+    else:
+        raise ValueError(f"Unexpected TaqType: {type}")
+
 
 # 1. DEFINITIVE LITTLE-ENDIAN INDEX (22 bytes)
-idx_dtype = np.dtype([
+IDX_DTYPE = np.dtype([
     ('ticker',  'S10'),
-    ('date',    '<i4'), 
-    ('start_idx',   '<i4'), 
-    ('end_idx', '<i4')  
+    ('date',    '<i4'),
+    ('start_idx',   '<i4'),
+    ('end_idx', '<i4')
 ])
 
-# 2. DEFINITIVE LITTLE-ENDIAN BIN SCHEMA (23 bytes)
-bin_dtype = np.dtype([
+# 2. TRADE RECORD (22 bytes) -- 1993 TAQ consolidated trade file
+T_BIN_DTYPE_22 = np.dtype([
+    ('time',    '<i4'),
+    ('price',   '<i4'),
+    ('volume',  '<i4'),
+    ('seq',     '<i4'),
+    ('cond',    '<i4'),
+    ('sale',    'S1'),
+    ('ex',      'S1'),
+])
+
+Q_BIN_DTYPE_23 = np.dtype([
     ('time',     '<i4'),
     ('bid',      '<i4'),
     ('ask',      '<i4'),
     ('seq',      '<i4'),
-    ('bid_size', '<i2'), # Fixed: Sizes are 2 bytes!
-    ('ask_size', '<i2'), # Fixed: Sizes are 2 bytes!
-    ('mode',     '<i2'), # Stored as a 2-byte integer condition code
-    ('ex',       'S1')
+    ('bid_size', '<i2'),
+    ('ask_size', '<i2'),
+    ('mode',     '<i2'),
+    ('ex',       'S1'),
+])
+
+Q_BIN_DTYPE_27 = np.dtype([
+    ('time',     '<i4'),
+    ('bid',      '<i4'),
+    ('ask',      '<i4'),
+    ('seq',      '<i4'),
+    ('bid_size', '<i2'),
+    ('ask_size', '<i2'),
+    ('mode',     '<i2'),
+    ('ex',       'S1'),
+    ('extra',    'S4'),
 ])

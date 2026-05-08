@@ -7,7 +7,7 @@ database = Database(root_path="data")
 dao = RawTaqDao(database=database)
 
 
-date = dt.date(1999, 1, 4)
+date = dt.date(1993, 1, 4)
 
 df = dao.load_data_for_day(
     #ticker="AA",

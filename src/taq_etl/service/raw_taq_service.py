@@ -10,23 +10,23 @@ from taq_etl.dal.models.database import Database
 
 class RawTaqService(BaseModel):
     database: Database
-    dao: RawTaqDao = PrivateAttr()
+    _dao: RawTaqDao = PrivateAttr()
 
     def model_post_init(self, __context) -> None:
-        self.dao = RawTaqDao(database=self.database)
+        self._dao = RawTaqDao(database=self.database)
 
     def print_record_size_for_day(self, date, type: TaqType):
-        idx_df = self.dao.load_taq_index(date, type)
-        taq_file = self.dao.get_taq_file(date, type)
+        idx_df = self._dao.load_taq_index(date, type)
+        taq_file = self._dao.get_taq_file(date, type)
 
-        record_size = self.dao.detect_record_size(taq_file.bin_path, idx_df)
+        record_size = self._dao.detect_record_size(taq_file.bin_path, idx_df)
         print(f"Record size for {date} {type}: {record_size} bytes")
     
     def process_for_day(self, date, type: TaqType):
         try:
-            df = self.dao.load_data_for_day(date=date, type=type)
+            df = self._dao.load_data_for_day(date=date, type=type)
             if not df.is_empty():
-                self.dao.write_file_for_day(date=date, df=df, taq_type=type)
+                self._dao.write_file_for_day(date=date, df=df, taq_type=type)
             print(f"Done: {date}")
         except Exception as e:
             print(f"Error on {date}: {e}")

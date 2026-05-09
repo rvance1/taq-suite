@@ -575,7 +575,7 @@ wheels = [
 ]
 
 [[package]]
-name = "taq-backtester"
+name = "taq-suite"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

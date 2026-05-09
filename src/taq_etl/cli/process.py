@@ -11,7 +11,7 @@ def process_group():
 
 @process_group.command(name="day")
 @click.option("--date", "-d", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
-@click.option("--type", "-t", type=click.Choice(["trade", "quote"]), required=True)
+@click.option("--type", "-t", type=click.Choice(["CT", "CQ"]), required=True)
 def process_day(date: dt.datetime, type: str):
     """Process a single day of TAQ data."""
     db = Database() 
@@ -21,7 +21,7 @@ def process_day(date: dt.datetime, type: str):
 @process_group.command(name="range")
 @click.option("--start", "-s", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
 @click.option("--end", "-e", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
-@click.option("--type", "-t", type=click.Choice(["trade", "quote"]), required=True)
+@click.option("--type", "-t", type=click.Choice(["CT", "CQ"]), required=True)
 def process_range(start: dt.datetime, end: dt.datetime, type: str):
     """Process a date range in parallel."""
     db = Database()

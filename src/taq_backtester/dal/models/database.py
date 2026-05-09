@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-import datetime as dt
 
 from .taq_table import TaqTable
+
 
 class Database(BaseModel):
     root_path: str | None = None

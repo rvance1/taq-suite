@@ -6,25 +6,25 @@ from enum import StrEnum
 
 
 class TaqType(StrEnum):
-    QUOTE = "CQ"
-    TRADE = "CT"
-    MASTER = "M"
+    QUOTE = "quote"
+    TRADE = "trade"
+    MASTER = "master"
 
 
 class TaqTable(BaseModel):
     root_dir: str
 
-    def __get_file_path(self, date: dt.date) -> Path:
-        base = f"{date.year}/{date.month:02d}"
+    def __get_file_path(self, date: dt.date, type: TaqType) -> Path:
+        base = f"{type}/{date.year}/{date.month:02d}"
         file_name = date.strftime("%Y-%m-%d.parquet")
         return Path(f"{self.root_dir}/{base}/{file_name}")
 
-    def __get_file_paths(self, start: dt.date, end: dt.date) -> list[Path]:
+    def __get_file_paths(self, start: dt.date, end: dt.date, type: TaqType) -> list[Path]:
         files_to_scan = []
         current_date = start
 
         while current_date <= end:
-            file_path = self.__get_file_path(current_date)
+            file_path = self.__get_file_path(current_date, type)
 
             if file_path.exists():
                 files_to_scan.append(Path(str(file_path)))

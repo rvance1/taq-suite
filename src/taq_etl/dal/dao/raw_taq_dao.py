@@ -134,7 +134,7 @@ class RawTaqDao(BaseModel):
             case TaqType.MASTER:
                 folder = "master"
 
-        path = Path(f"{self.database.get_interim_path()}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y%m%d")}.parquet")
+        path = Path(f"{self.database.get_interim_path()}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y-%m-%d")}.parquet")
         if not self.database.is_connected():
             return ValueError("Database is not connected")
         

@@ -22,6 +22,7 @@ class TaqDao(BaseModel):
         return QuoteSchema.validate(
             table.scan_range(start_date, end_date, TaqType.QUOTE)
             .filter(pl.col("datetime").is_between(start_date, end_date))
+            .sort(["datetime", "symbol"])
             .collect()
         )
     
@@ -34,5 +35,6 @@ class TaqDao(BaseModel):
         return TradeSchema.validate(
             table.scan_range(start_date, end_date, TaqType.TRADE)
             .filter(pl.col("datetime").is_between(start_date, end_date))
+            .sort(["datetime", "symbol"])
             .collect()
         )

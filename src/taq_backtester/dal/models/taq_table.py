@@ -14,29 +14,37 @@ class TaqType(StrEnum):
 class TaqTable(BaseModel):
     root_dir: str
 
-    def __get_file_path(self, date: dt.date, type: TaqType) -> Path:
-        base = f"{type}/{date.year}/{date.month:02d}"
-        file_name = date.strftime("%Y-%m-%d.parquet")
-        return Path(f"{self.root_dir}/{base}/{file_name}")
+    def __get_file_paths_by_day(self, date: dt.date, type: TaqType) -> list[Path]:
+        """Returns all parquet files for a given date, handling both single files and folders."""
+        base_dir = Path(self.root_dir) / str(type) / str(date.year) / f"{date.month:02d}"
+        date_str = date.strftime("%Y-%m-%d")
+
+        single_file = base_dir / f"{date_str}.parquet"
+        if single_file.is_file():
+            return [single_file]
+
+        folder = base_dir / date_str
+        if folder.is_dir():
+            return list(folder.glob("*.parquet"))
+
+        return []
 
     def __get_file_paths(self, start: dt.date, end: dt.date, type: TaqType) -> list[Path]:
         files_to_scan = []
         current_date = start
 
         while current_date <= end:
-            file_path = self.__get_file_path(current_date, type)
-
-            if file_path.exists():
-                files_to_scan.append(Path(str(file_path)))
-
+            files_to_scan.extend(self.__get_file_paths_by_day(current_date, type))
             current_date += dt.timedelta(days=1)
 
         return files_to_scan
     
-    def scan_date(self, date: dt.date) -> pl.LazyFrame:
-        path = self.__get_file_path(date)
-        return pl.scan_parquet(path)
+    def scan_date(self, date: dt.date, type: TaqType) -> pl.LazyFrame:
+        paths = self.__get_file_paths_by_day(date, type)
+        return pl.scan_parquet(paths)
 
-    def scan_range(self, start_date: dt.date, end_date: dt.date) -> pl.LazyFrame:
-        paths = self.__get_file_paths(start_date, end_date)
+    def scan_range(self, start_date: dt.date, end_date: dt.date, type: TaqType) -> pl.LazyFrame:
+        paths = self.__get_file_paths(start_date, end_date, type)
+        if not paths:
+            raise FileNotFoundError(f"No data found for range {start_date} to {end_date}")
         return pl.scan_parquet(paths)

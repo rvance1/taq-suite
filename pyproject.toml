@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "click>=8.3.3",
     "dataframely>=2.9.1",
     "ipykernel>=7.2.0",
     "lz4>=4.4.5",
@@ -13,3 +14,5 @@ dependencies = [
     "pydantic>=2.13.3",
     "tqdm>=4.67.3",
 ]
+[project.scripts]
+taq-etl = "taq_etl.cli.main:cli"

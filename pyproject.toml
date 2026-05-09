@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=2.4.4",
     "polars>=1.40.1",
     "pydantic>=2.13.3",
+    "pydantic-settings>=2.14.1",
     "tqdm>=4.67.3",
 ]
 [project.scripts]

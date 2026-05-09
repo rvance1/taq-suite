@@ -1,7 +1,6 @@
 from pydantic import BaseModel, PrivateAttr
 import datetime as dt
-from concurrent.futures import ThreadPoolExecutor
-from itertools import repeat
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from taq_etl.dal.dao.raw_taq_dao import RawTaqDao
@@ -31,13 +30,14 @@ class RawTaqService(BaseModel):
         except Exception as e:
             print(f"Error on {date}: {e}")
     
-    def process_range_parallel(self, start_date: dt.date, end_date: dt.date, type: TaqType):
+    def process_range_parallel(self, start_date, end_date, type):
         date_list = []
         curr = start_date
         while curr <= end_date:
             date_list.append(curr)
             curr += dt.timedelta(days=1)
-
         with ThreadPoolExecutor(max_workers=4) as executor:
-            results = executor.map(self.process_for_day, date_list, repeat(type))
-            list(tqdm(results, total=len(date_list), desc=f"Processing {type}"))
+            futures = {executor.submit(self.process_for_day, d, type): d for d in date_list}
+            with tqdm(total=len(date_list), desc=f"Processing {type}") as pbar:
+                for future in as_completed(futures):
+                    pbar.update(1)

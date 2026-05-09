@@ -6,6 +6,7 @@ from taq_backtester.dal.models.database import Database
 from taq_backtester.dal.models.taq_table import TaqTable, TaqType
 from taq_backtester.dal.models.schema import QuoteSchema, QuoteDf, TradeSchema, TradeDf
 
+
 class TaqDao(BaseModel):
     database: Database
 

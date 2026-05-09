@@ -50,8 +50,9 @@ class RawTaqService(BaseModel):
             }
             with tqdm(total=len(date_list), desc=f"Processing {type}") as pbar:
                 for future in as_completed(futures):
-                    msg = future.result()
-                    print(msg)
+                    result = future.result()
+                    if result is not None:
+                        print(result)
                     pbar.update(1)
 
 
@@ -65,6 +66,6 @@ def _process_day_worker(date, type_str, root_path):
         df = dao.load_data_for_day(date=date, type=TaqType(type_str))
         if not df.is_empty():
             dao.write_file_for_day(date=date, df=df, taq_type=TaqType(type_str))
-        return f"Done: {date}"
+        return None
     except Exception as e:
         return f"Error on {date}: {e}"

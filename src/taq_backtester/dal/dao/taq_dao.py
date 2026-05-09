@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from pathlib import Path
 import datetime as dt
 import polars as pl
 

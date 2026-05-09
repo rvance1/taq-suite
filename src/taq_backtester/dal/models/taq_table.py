@@ -2,6 +2,14 @@ from pydantic import BaseModel
 import datetime as dt
 import polars as pl
 from pathlib import Path
+from enum import StrEnum
+
+
+class TaqType(StrEnum):
+    QUOTE = "CQ"
+    TRADE = "CT"
+    MASTER = "M"
+
 
 class TaqTable(BaseModel):
     root_dir: str

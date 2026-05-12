@@ -26,6 +26,18 @@ class TaqDao(BaseModel):
             .collect()
         )
     
+    def scan_quote_by_date(self, date: dt.date) -> pl.LazyFrame:
+        table = self.get_table()
+        return table.scan_date(date, TaqType.QUOTE)
+    
+    def scan_quote_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> pl.LazyFrame:
+        table = self.get_table()
+        return (
+            table.scan_range(start_date, end_date, TaqType.QUOTE)
+            .filter(pl.col("datetime").is_between(start_date, end_date))
+            .sort(["datetime", "ticker"])
+        )
+
     def load_trade_by_date(self, date: dt.date) -> TradeDf:
         table = self.get_table()
         return TradeSchema.validate(table.scan_date(date, TaqType.TRADE).collect())
@@ -37,4 +49,16 @@ class TaqDao(BaseModel):
             .filter(pl.col("datetime").is_between(start_date, end_date))
             .sort(["datetime", "ticker"])
             .collect()
+        )
+    
+    def scan_trade_by_date(self, date: dt.date) -> pl.LazyFrame:
+        table = self.get_table()
+        return table.scan_date(date, TaqType.TRADE)
+    
+    def scan_trade_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> pl.LazyFrame:
+        table = self.get_table()
+        return (
+            table.scan_range(start_date, end_date, TaqType.TRADE)
+            .filter(pl.col("datetime").is_between(start_date, end_date))
+            .sort(["datetime", "ticker"])
         )

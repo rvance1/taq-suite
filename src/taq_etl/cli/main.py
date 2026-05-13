@@ -10,7 +10,7 @@ from taq_etl.cli.utils import utils_group
 @click.pass_context
 def cli(ctx):
     """TAQ ETL: High-performance financial data processing."""
-    db = Database(root_path=settings.database_path)
+    db = Database(raw_taq_path=settings.raw_taq_path, output_path=settings.output_path)
     service = RawTaqService(database=db)
     ctx.obj = service
 

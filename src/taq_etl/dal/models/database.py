@@ -4,18 +4,15 @@ from .taq_file import TaqFile, TaqType
 
 
 class Database(BaseModel):
-    root_path: str | None = None
+    raw_taq_path: str | None = None
+    output_path: str | None = None
 
-    def connect(self, path: str) -> None:
-        self.root_path = path
-    
+    def connect(self, raw_taq_path: str, output_path: str) -> None:
+        self.raw_taq_path = raw_taq_path
+        self.output_path = output_path
+
     def is_connected(self) -> bool:
-        return self.root_path is not None
-
-    def get_raw_taq_path(self) -> str:
-        if not self.is_connected():
-            raise ValueError("Database is not connected")
-        return f"{self.root_path}/raw"
+        return self.raw_taq_path is not None and self.output_path is not None
     
     def get_interim_path(self) -> str:
         if not self.is_connected():
@@ -25,4 +22,4 @@ class Database(BaseModel):
     def get_taq_file(self, date: dt.date, type: TaqType) -> TaqFile:
         if not self.is_connected():
             raise ValueError("Database is not connected")
-        return TaqFile(root_path=self.get_raw_taq_path() + "/taq", date=date, type=type, letter="A")
+        return TaqFile(root_path=self.raw_taq_path + "/taq", date=date, type=type, letter="A")

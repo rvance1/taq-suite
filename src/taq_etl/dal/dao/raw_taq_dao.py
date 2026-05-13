@@ -123,6 +123,20 @@ class RawTaqDao(BaseModel):
                 pl.all().exclude(["datetime", "date", "time"])
             )
         )
+    
+    def upsert_as_parquet(self, df: pl.DataFrame, path: Path) -> None:
+        if path.exists():
+            existing_df = pl.read_parquet(path)
+            combined_df = (
+                pl.concat([existing_df, df])
+                .unique(subset=["datetime", "ticker"])
+                .sort(["ticker", "datetime"])
+            )
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            combined_df = df
+        
+        combined_df.write_parquet(path)
         
     def write_file_for_day(self, date: dt.date, df: pl.DataFrame, taq_type: TaqType) -> None:
         
@@ -134,9 +148,9 @@ class RawTaqDao(BaseModel):
             case TaqType.MASTER:
                 folder = "master"
 
-        path = Path(f"{self.database.get_interim_path()}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y-%m-%d")}.parquet")
+        path = Path(f"{self.database.output_path}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y-%m-%d")}.parquet")
         if not self.database.is_connected():
             raise ValueError("Database is not connected")
         
-        path.parent.mkdir(parents=True, exist_ok=True)
-        df.write_parquet(path)
+        
+        self.upsert_as_parquet(df, path)

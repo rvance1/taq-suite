@@ -42,10 +42,10 @@ class RawTaqService(BaseModel):
             date_list.append(curr)
             curr += dt.timedelta(days=1)
 
-        root_path = self.database.root_path
+        db_copy = self.database.model_copy()
         with ProcessPoolExecutor(max_workers=4) as executor:
             futures = {
-                executor.submit(_process_day_worker, d, type.value, root_path): d
+                executor.submit(_process_day_worker, d, type.value, db_copy): d
                 for d in date_list
             }
             with tqdm(total=len(date_list), desc=f"Processing {type}") as pbar:
@@ -56,11 +56,10 @@ class RawTaqService(BaseModel):
                     pbar.update(1)
 
 
-def _process_day_worker(date, type_str, root_path):
+def _process_day_worker(date, type_str, database):
     """Worker function for multiprocessing.
     Runs in its own process with its own GIL and DAO instance.
     """
-    database = Database(root_path=root_path)
     dao = RawTaqDao(database=database)
     try:
         df = dao.load_data_for_day(date=date, type=TaqType(type_str))

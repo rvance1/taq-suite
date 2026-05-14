@@ -17,7 +17,7 @@ class TaqDao(BaseModel):
         table = self.get_table()
         return QuoteHistorySchema.validate(table.scan_date(date, TaqType.QUOTE).collect())
     
-    def load_quote_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> QuoteHistoryDf:
+    def load_quote_by_range(self, start_date: dt.date, end_date: dt.date) -> QuoteHistoryDf:
         table = self.get_table()
         return QuoteHistorySchema.validate(
             table.scan_range(start_date, end_date, TaqType.QUOTE)
@@ -30,7 +30,7 @@ class TaqDao(BaseModel):
         table = self.get_table()
         return table.scan_date(date, TaqType.QUOTE)
     
-    def scan_quote_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> pl.LazyFrame:
+    def scan_quote_by_range(self, start_date: dt.date, end_date: dt.date) -> pl.LazyFrame:
         table = self.get_table()
         return (
             table.scan_range(start_date, end_date, TaqType.QUOTE)
@@ -42,7 +42,7 @@ class TaqDao(BaseModel):
         table = self.get_table()
         return TradeHistorySchema.validate(table.scan_date(date, TaqType.TRADE).collect())
     
-    def load_trade_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> TradeHistoryDf:
+    def load_trade_by_range(self, start_date: dt.date, end_date: dt.date) -> TradeHistoryDf:
         table = self.get_table()
         return TradeHistorySchema.validate(
             table.scan_range(start_date, end_date, TaqType.TRADE)
@@ -55,7 +55,7 @@ class TaqDao(BaseModel):
         table = self.get_table()
         return table.scan_date(date, TaqType.TRADE)
     
-    def scan_trade_by_range(self, start_date: dt.datetime, end_date: dt.datetime) -> pl.LazyFrame:
+    def scan_trade_by_range(self, start_date: dt.date, end_date: dt.date) -> pl.LazyFrame:
         table = self.get_table()
         return (
             table.scan_range(start_date, end_date, TaqType.TRADE)

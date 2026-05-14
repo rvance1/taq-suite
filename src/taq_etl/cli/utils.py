@@ -1,5 +1,6 @@
 import click
 import datetime as dt
+from taq_etl.config import settings
 from taq_etl.dal.models.taq_file import TaqType
 from taq_etl.dal.models.database import Database
 from taq_etl.service.raw_taq_service import RawTaqService
@@ -14,6 +15,6 @@ def utils_group():
 @click.option("--type", "-t", type=click.Choice(["trades", "quotes"]), required=True)
 def print_size(date: dt.datetime, type: str):
     """Detect and print the record size for a specific daily binary file."""
-    db = Database()
+    db = Database(raw_taq_path=settings.raw_taq_path, output_path=settings.output_path)
     service = RawTaqService(database=db)
     service.print_record_size_for_day(date.date(), TaqType(type))

@@ -23,5 +23,5 @@ class WeightsHistorySchema(dy.Schema):
 WeightsDf: TypeAlias = dy.DataFrame[WeightsSchema]
 SharesDf: TypeAlias = dy.DataFrame[SharesSchema]
 PricesDf: TypeAlias = dy.DataFrame[PricesSchema]
-WeigthsHistoryDf: TypeAlias = dy.DataFrame[WeightsHistorySchema]
+WeightsHistoryDf: TypeAlias = dy.DataFrame[WeightsHistorySchema]
 

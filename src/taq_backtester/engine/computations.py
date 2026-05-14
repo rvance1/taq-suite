@@ -13,6 +13,8 @@ def compute_prices(quote_data: QuoteHistoryDf) -> PricesDf:
         .with_columns(
             pl.col("datetime").dt.truncate('1d').alias("hour")
         )
+        .filter(pl.col("price").gt(0))
+        .sort(["ticker", "datetime"])
         .group_by(["hour", "ticker"]).agg(
             pl.col("price").last()
         )
@@ -73,6 +75,24 @@ def compute_delta_shares(optimal_shares: SharesDf, current_shares: SharesDf) -> 
         )
         .with_columns(
             (pl.col("shares").fill_null(0) - pl.col("shares_right").fill_null(0))
+            .cast(pl.Int64).alias("shares")
+        )
+        .select(["ticker", "shares"])
+    )
+
+def add_delta_shares(current_shares: SharesDf, delta_shares: SharesDf) -> SharesDf:
+    if current_shares.is_empty():
+        return delta_shares
+    
+    return SharesSchema.validate(
+        current_shares.join(
+            delta_shares, 
+            on="ticker", 
+            how="full", 
+            coalesce=True
+        )
+        .with_columns(
+            (pl.col("shares").fill_null(0) + pl.col("shares_right").fill_null(0))
             .cast(pl.Int64).alias("shares")
         )
         .select(["ticker", "shares"])

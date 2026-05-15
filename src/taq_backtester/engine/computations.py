@@ -37,14 +37,11 @@ def compute_aum(holdings: SharesDf, prices: PricesDf, cash: float) -> float:
     if holdings.is_empty():
         return cash
     
-    return cash + (
-        holdings.join(prices, on=["datetime", "ticker"], how="left")
-        .with_columns(
-            (pl.col("shares") * pl.col("price")).alias("position_value")
-        )
-        .select(pl.col("position_value"))
-        .sum()
-    )
+    return cash + holdings.join(prices, on=["ticker"], how="left").with_columns(
+        (pl.col("shares") * pl.col("price")).alias("position_value")
+    ).select(
+        pl.col("position_value")
+    ).sum().item()
 
 def compute_optimal_shares(optimal_weights: WeightsDf, prices: PricesDf, aum: float) -> SharesDf:
     return SharesSchema.validate(

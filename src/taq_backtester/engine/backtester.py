@@ -18,14 +18,16 @@ class Backtester():
         self.config = config
         self.taq_dao = taq_dao
         self.current_date = self.config.start_date
-        self.holdings: SharesDf = pl.DataFrame()
+        self.holdings: SharesDf = pl.DataFrame({"ticker": pl.Series([], dtype=pl.String), "shares": pl.Series([], dtype=pl.Int64)})
         self.cash = self.config.initial_aum
-        self.realized_holdings: SharesHistoryDf = pl.DataFrame()
+        self.realized_holdings: SharesHistoryDf = pl.DataFrame({"datetime": pl.Series([], dtype=pl.Datetime), "ticker": pl.Series([], dtype=pl.String), "shares": pl.Series([], dtype=pl.Int64)})
         self.aum_history = {}
         
     def _record_holdings(self, order_fills: SharesHistoryDf) -> None:
+        current_dt = dt.datetime.combine(self.current_date, dt.time(0, 0))
         holdings_snapshot: SharesHistoryDf = SharesHistorySchema.validate(
-                self.holdings.join(order_fills, on="ticker", how="left").select(["datetime", "ticker", "shares"])
+            self.holdings.with_columns(pl.lit(current_dt).alias("datetime"))
+            .select(["datetime", "ticker", "shares"])
         )
     
         if self.realized_holdings.is_empty():
@@ -103,7 +105,11 @@ class Backtester():
             print(f"No optimal weights for date: {self.current_date}, skipping rebalance")
             return
         
-        optimal_weights = WeightsSchema.validate(optimal_weights)
+        optimal_weights = WeightsSchema.validate(
+            optimal_weights.filter(
+                pl.col("weight").is_not_nan() & pl.col("weight").is_finite()
+            )
+        )
         quote_data = self.taq_dao.load_quote_by_date(self.current_date)
 
         delta_shares = self.generate_orders(

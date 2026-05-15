@@ -80,7 +80,7 @@ class Backtester():
         )
 
         order_fills = SharesHistorySchema.validate(order_fills_raw.select(["datetime", "ticker", "shares"]))
-        self._record_holdings(self.holdings, order_fills)
+        self._record_holdings(order_fills)
 
     def rebalance(self, optimal_weights_history: WeightsHistoryDf, execute_at: dt.time = dt.time(9, 5)) -> None:
         """Rebalances the portfolio based on the optimal weights for the given datetime."""

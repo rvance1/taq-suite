@@ -12,7 +12,7 @@ from taq_backtester.dal.models.schema import QuoteHistoryDf
 from .computations import compute_prices, compute_aum, compute_optimal_shares, compute_delta_shares, add_delta_shares
 
 
-# TODO: Add aum history, finish rebalance function, move helper function
+# TODO: Add aum history, finish rebalance function
 class Backtester():
     def __init__(self, config: BTConfig, taq_dao: TaqDao):
         self.config = config
@@ -21,6 +21,7 @@ class Backtester():
         self.holdings: SharesDf = pl.DataFrame()
         self.cash = self.config.initial_aum
         self.realized_holdings: SharesHistoryDf = pl.DataFrame()
+        self.aum_history = {}
         
     def _record_holdings(self, order_fills: SharesHistoryDf) -> None:
         holdings_snapshot: SharesHistoryDf = SharesHistorySchema.validate(
@@ -33,6 +34,8 @@ class Backtester():
             self.realized_holdings = pl.concat([self.realized_holdings, holdings_snapshot]).sort(["ticker", "datetime"])
     
     def generate_orders(self, optimal_weights: WeightsDf, quote_data: QuoteHistoryDf) -> SharesDf:
+        """Generates the delta shares to trade based on the optimal weights and current holdings."""
+
         prices = compute_prices(quote_data)
 
         aum = compute_aum(
@@ -52,11 +55,12 @@ class Backtester():
             current_shares=self.holdings
         )
 
+        self.aum_history[self.current_date] = aum
         return delta_shares
 
     def execute_orders(self, delta_shares: SharesDf, quote_data: QuoteHistoryDf) -> None:
+        """Executes the orders by calculating the cost and updating cash and holdings."""
 
-        # Compute when the orders fill
         order_fills_raw = (
             quote_data.join(delta_shares, on="ticker", how="inner")
             .unique(subset=["ticker"], keep="first", maintain_order=True)
@@ -68,35 +72,39 @@ class Backtester():
             )
         )
 
-        # Adjust cash
         self.cash -= order_fills_raw.get_column("cost").sum()
 
-        # Update current holdings
         self.holdings = add_delta_shares(
             current_shares=self.holdings, 
             delta_shares=delta_shares
         )
-        
-        # Add to history
+
         order_fills = SharesHistorySchema.validate(order_fills_raw.select(["datetime", "ticker", "shares"]))
         self._record_holdings(self.holdings, order_fills)
 
-    def rebalance(self, optimal_weights_history: WeightsHistoryDf, datetime: dt.datetime) -> None:
-        date = datetime.date()
+    def rebalance(self, optimal_weights_history: WeightsHistoryDf, execute_at: dt.time = dt.time(9, 5)) -> None:
+        """Rebalances the portfolio based on the optimal weights for the given datetime."""
+
         optimal_weights = (
-            optimal_weights_history.with_columns(
-                pl.col("datetime").dt.date().alias("date")
+            optimal_weights_history
+            .with_columns([
+                pl.col("datetime").dt.date().alias("date"),
+                pl.col("datetime").dt.time().alias("time")
+            ])
+            .filter(
+                pl.col("date").eq(self.current_date),
+                pl.col("time") <= execute_at
             )
-            .filter(pl.col("datetime").gt(datetime), maintain_order=True)
-            .unique(subset=["ticker", "date"], keep="first")
-            .drop("date")
+            .sort("datetime")
+            .unique(subset=["ticker", "date"], keep="last")
+            .drop(["date", "time"])
         )
         if optimal_weights.is_empty():
-            print(f"No optimal weights for date: {date}, skipping rebalance")
+            print(f"No optimal weights for date: {self.current_date}, skipping rebalance")
             return
         
         optimal_weights = WeightsSchema.validate(optimal_weights)
-        quote_data = self.taq_dao.load_quote_by_date(date)
+        quote_data = self.taq_dao.load_quote_by_date(self.current_date)
 
         delta_shares = self.generate_orders(
             optimal_weights=optimal_weights,

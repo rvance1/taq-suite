@@ -25,6 +25,14 @@ class RawTaqService(BaseModel):
 
         record_size = self._dao.detect_record_size(taq_file.bin_path, idx_df)
         print(f"Record size for {date} {type}: {record_size} bytes")
+
+    def print_hexdump_for_day(self, date: dt.date, type: TaqType) -> None:
+        taq_file = self._dao.get_taq_file(date, type)
+        self._dao.hexdump_file(taq_file.bin_path)
+
+    def print_index_for_day(self, date: dt.date, type: TaqType) -> None:
+        idx_df = self._dao.load_taq_index(date, type)
+        print(idx_df)
     
     def process_for_day(self, date, type: TaqType):
         try:

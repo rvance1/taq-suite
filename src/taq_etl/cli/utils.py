@@ -39,3 +39,11 @@ def print_index_hexdump(service: RawTaqService, date: dt.datetime, type: str):
 def print_index(service: RawTaqService, date: dt.datetime, type: str):
     """Load and print the index DataFrame for a specific date and type."""
     service.print_index_for_day(date.date(), TaqType(type))
+
+@utils_group.command(name="print-idx-by-date")
+@click.option("--date", "-d", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
+@click.option("--type", "-t", type=click.Choice(["CT", "CQ"]), required=True)
+@click.pass_obj
+def print_idx_by_date(service: RawTaqService, date: dt.datetime, type: str):
+    """Group the index by date and show per-date summary (ticker count, record range, total records)."""
+    service.print_idx_by_date(date.date(), TaqType(type))

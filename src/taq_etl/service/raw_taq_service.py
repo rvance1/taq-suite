@@ -4,6 +4,7 @@ from pydantic import BaseModel, PrivateAttr
 import datetime as dt
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
+import polars as pl
 
 from taq_etl.dal.dao.raw_taq_dao import RawTaqDao
 from taq_etl.dal.models.taq_file import TaqType
@@ -37,6 +38,16 @@ class RawTaqService(BaseModel):
     def print_index_for_day(self, date: dt.date, type: TaqType) -> None:
         idx_df = self._dao.load_taq_index(date, type)
         print(idx_df)
+
+    def print_idx_by_date(self, date: dt.date, type: TaqType) -> None:
+        idx_df = self._dao.load_taq_index(date, type)
+        summary = idx_df.group_by("date").agg(
+            pl.len().alias("num_tickers"),
+            pl.col("start_idx").min().alias("min_start_idx"),
+            pl.col("end_idx").max().alias("max_end_idx"),
+            (pl.col("end_idx") - pl.col("start_idx") + 1).sum().alias("total_records"),
+        ).sort("date")
+        print(summary)
     
     def process_for_day(self, date, type: TaqType):
         try:

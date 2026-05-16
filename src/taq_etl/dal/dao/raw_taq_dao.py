@@ -155,7 +155,7 @@ class RawTaqDao(BaseModel):
         
         self.upsert_as_parquet(df, path)
 
-    def hexdump_file(bin_path, num_bytes=160):
+    def hexdump_file(self, bin_path, num_bytes=160):
         with lz4.frame.open(bin_path, 'rb') as f:
             raw = f.read(num_bytes)
             

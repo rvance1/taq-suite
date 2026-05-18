@@ -13,12 +13,12 @@ from taq_etl.dal.models.byte_schema import get_bin_dtype, IDX_DTYPE
 class RawTaqDao(BaseModel):
     database: Database
 
-    def get_taq_file(self, date: dt.date, type: TaqType) -> TaqFile:
-        return self.database.get_taq_file(date, type)
+    def get_taq_file(self, date: dt.date, type: TaqType, letter: str | None = "A") -> TaqFile:
+        return self.database.get_taq_file(date, type, letter=letter)
     
-    def load_taq_index(self, date: dt.date, type: TaqType) -> pl.DataFrame:
+    def load_taq_index(self, date: dt.date, type: TaqType, letter: str | None = "A") -> pl.DataFrame:
         """Loads the TAQ index for a given date and type. Ex: date=dt.date(1998, 1, 1), type=TaqType.QUOTE"""
-        taq_file = self.get_taq_file(date, type)
+        taq_file = self.get_taq_file(date, type, letter=letter)
         with lz4.frame.open(taq_file.idx_path, 'rb') as f:
             raw = f.read()
             idx_data = np.frombuffer(raw, dtype=IDX_DTYPE)
@@ -124,14 +124,13 @@ class RawTaqDao(BaseModel):
             )
         )
     
-    def process_month(self, year: int, month: int, type: TaqType) -> None:
-        """Processes an entire month of TAQ data by decompressing the file once 
-        and iteratively writing out daily parquet files to save RAM."""
+    def process_month_chunk(self, year: int, month: int, type: TaqType, letter: str | None = "A") -> None:
+        """Processes a chunk of an entire month of TAQ data by decompressing the file once."""
         
         # Use dummy date to resolve the file paths 
         dummy_date = dt.date(year, month, 1)
-        taq_file = self.get_taq_file(dummy_date, type)
-        idx_df = self.load_taq_index(dummy_date, type)
+        taq_file = self.get_taq_file(dummy_date, type, letter)
+        idx_df = self.load_taq_index(dummy_date, type, letter)
         
         if idx_df.is_empty():
             return
@@ -213,6 +212,34 @@ class RawTaqDao(BaseModel):
             
             if not df.is_empty():
                 self.write_file_for_day(date=date, df=df, taq_type=type)
+
+    def get_available_letters_for_month(self, year: int, month: int, type: TaqType) -> list[str]:
+        import string
+        letters = []
+        dummy_date = dt.date(year, month, 1)
+        for letter in string.ascii_uppercase:
+            try:
+                taq_file = self.get_taq_file(dummy_date, type, letter=letter)
+                if Path(taq_file.bin_path).exists():
+                    letters.append(letter)
+                else:
+                    break
+            except Exception:
+                break
+        return letters
+    
+    def process_month(self, year: int, month: int, type: TaqType) -> None:
+        """Processes an entire month of TAQ data by detecting all chunks and processing them iteratively."""
+        if year >= 1996:
+            letters = self.get_available_letters_for_month(year, month, type)
+            if not letters:
+                print(f"No files found for {year}-{month:02d} {type}")
+                return
+            for letter in letters:
+                print(f"Processing chunk {letter} for {year}-{month:02d} {type}...")
+                self.process_month_chunk(year=year, month=month, type=type, letter=letter)
+        else:
+            self.process_month_chunk(year=year, month=month, type=type, letter=None)
     
     def upsert_as_parquet(self, df: pl.DataFrame, path: Path) -> None:
         if path.exists():

@@ -57,6 +57,13 @@ class RawTaqService(BaseModel):
             print(f"Done: {date}")
         except Exception as e:
             print(f"Error on {date}: {e}")
+
+    def process_for_month(self, year: int, month: int, type: TaqType):
+        try:
+            self._dao.process_month(year=year, month=month, type=type)
+            print(f"Done processing month: {year}-{month:02d} for {type}")
+        except Exception as e:
+            print(f"Error on month {year}-{month:02d}: {e}")
     
     def process_range_parallel(self, start_date, end_date, type):
         date_list = []

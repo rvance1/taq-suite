@@ -124,6 +124,96 @@ class RawTaqDao(BaseModel):
             )
         )
     
+    def process_month(self, year: int, month: int, type: TaqType) -> None:
+        """Processes an entire month of TAQ data by decompressing the file once 
+        and iteratively writing out daily parquet files to save RAM."""
+        
+        # Use dummy date to resolve the file paths 
+        dummy_date = dt.date(year, month, 1)
+        taq_file = self.get_taq_file(dummy_date, type)
+        idx_df = self.load_taq_index(dummy_date, type)
+        
+        if idx_df.is_empty():
+            return
+
+        # Decompress binary payload EXACTLY once to avoid lz4 overhead
+        with lz4.frame.open(taq_file.bin_path, 'rb') as f:
+            raw_bytes = f.read()
+            
+        total_bytes = len(raw_bytes)
+        total_records = int((idx_df["end_idx"] - idx_df["start_idx"] + 1).sum())
+        
+        if total_bytes % total_records != 0:
+            raise ValueError(f"Corrupted data or missing records: {total_bytes} bytes does not divide evenly by {total_records} records.")
+            
+        record_size = total_bytes // total_records
+        bin_dtype = get_bin_dtype(type, record_size)
+
+        unique_dates = idx_df["date"].drop_nulls().unique().sort().to_list()
+
+        # Iterate and build one daily DataFrame at a time to optimize RAM
+        for date in unique_dates:
+            meta = idx_df.filter(pl.col("date") == date).sort("start_idx")
+            
+            if meta.is_empty():
+                continue
+            
+            min_idx = meta["start_idx"].min()
+            max_idx = meta["end_idx"].max()
+            
+            start_byte = (min_idx - 1) * record_size if min_idx > 0 else 0
+            end_byte = max_idx * record_size
+            
+            day_raw = raw_bytes[start_byte:end_byte]
+            bin_np = np.frombuffer(day_raw, dtype=bin_dtype)
+
+            counts = (meta["end_idx"] - meta["start_idx"] + 1).to_numpy()
+            tickers = meta["ticker"].to_numpy()
+            ticker_col = np.repeat(tickers, counts)
+
+            if type == TaqType.TRADE:
+                packed_data = pl.DataFrame({
+                    "date": [date] * len(bin_np),
+                    "ticker": ticker_col,
+                    "time": bin_np['time'],
+                    "price": bin_np['price'] / 100000.0,
+                    "volume": bin_np['volume'],
+                    "seq": bin_np['seq'],
+                    "cond": bin_np['cond'],
+                    "sale": [s.decode('latin-1') for s in bin_np['sale']],
+                    "ex": [e.decode('latin-1') for e in bin_np['ex']],
+                })
+            else:
+                packed_data = pl.DataFrame({
+                    "date": [date] * len(bin_np),
+                    "ticker": ticker_col,
+                    "time": bin_np['time'],
+                    "bid": bin_np['bid'] / 100000.0,
+                    "ask": bin_np['ask'] / 100000.0,
+                    "bid_size": bin_np['bid_size'],
+                    "ask_size": bin_np['ask_size'],
+                    "seq": bin_np['seq'],
+                    "mode": bin_np['mode'],
+                    "ex": [e.decode('latin-1') for e in bin_np['ex']],
+                })
+                
+            df = (
+                packed_data
+                .with_columns(
+                    (
+                        pl.col("date").cast(pl.Datetime) + pl.duration(seconds=pl.col("time"))
+                    )
+                    .alias("datetime")
+                )
+                .select(
+                    "datetime", 
+                    pl.all().exclude(["datetime", "date", "time"])
+                )
+            )
+            
+            if not df.is_empty():
+                self.write_file_for_day(date=date, df=df, taq_type=type)
+    
     def upsert_as_parquet(self, df: pl.DataFrame, path: Path) -> None:
         if path.exists():
             existing_df = pl.read_parquet(path)

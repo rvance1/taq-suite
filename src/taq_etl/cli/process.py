@@ -16,6 +16,14 @@ def process_day(service: RawTaqService, date: dt.datetime, type: str):
     """Process a single day of TAQ data."""
     service.process_for_day(date.date(), TaqType(type))
 
+@process_group.command(name="month")
+@click.option("--date", "-d", type=click.DateTime(formats=["%Y-%m"]), required=True, help="Month to process in YYYY-MM format")
+@click.option("--type", "-t", type=click.Choice(["CT", "CQ"]), required=True)
+@click.pass_obj
+def process_month(service: RawTaqService, date: dt.datetime, type: str):
+    """Process an entire month of TAQ data iteratively."""
+    service.process_for_month(date.year, date.month, TaqType(type))
+
 @process_group.command(name="range")
 @click.option("--start", "-s", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
 @click.option("--end", "-e", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)

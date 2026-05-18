@@ -65,20 +65,26 @@ class RawTaqService(BaseModel):
         except Exception as e:
             print(f"Error on month {year}-{month:02d}: {e}")
     
-    def process_range_parallel(self, start_date, end_date, type):
-        date_list = []
-        curr = start_date
+    def process_range_parallel(self, start_date, end_date, type: TaqType):
+        month_list = []
+        # Start at the first of the start_date's month
+        curr = dt.date(start_date.year, start_date.month, 1)
+        
         while curr <= end_date:
-            date_list.append(curr)
-            curr += dt.timedelta(days=1)
+            month_list.append((curr.year, curr.month))
+            # Advance to the first day of the next month
+            if curr.month == 12:
+                curr = dt.date(curr.year + 1, 1, 1)
+            else:
+                curr = dt.date(curr.year, curr.month + 1, 1)
 
         db_copy = self.database.model_copy()
         with ProcessPoolExecutor(max_workers=4) as executor:
             futures = {
-                executor.submit(_process_day_worker, d, type.value, db_copy): d
-                for d in date_list
+                executor.submit(_process_month_worker, year, month, type.value, db_copy): (year, month)
+                for year, month in month_list
             }
-            with tqdm(total=len(date_list), desc=f"Processing {type}") as pbar:
+            with tqdm(total=len(month_list), desc=f"Processing {type}") as pbar:
                 for future in as_completed(futures):
                     result = future.result()
                     if result is not None:
@@ -86,15 +92,13 @@ class RawTaqService(BaseModel):
                     pbar.update(1)
 
 
-def _process_day_worker(date, type_str, database):
+def _process_month_worker(year, month, type_str, database):
     """Worker function for multiprocessing.
     Runs in its own process with its own GIL and DAO instance.
     """
     dao = RawTaqDao(database=database)
     try:
-        df = dao.load_data_for_day(date=date, type=TaqType(type_str))
-        if not df.is_empty():
-            dao.write_file_for_day(date=date, df=df, taq_type=TaqType(type_str))
-        return None
+        dao.process_month(year=year, month=month, type=TaqType(type_str))
+        return f"Finished chunk processing for: {year}-{month:02d}"
     except Exception as e:
-        return f"Error on {date}: {e}"
+        return f"Error on {year}-{month:02d}: {e}"

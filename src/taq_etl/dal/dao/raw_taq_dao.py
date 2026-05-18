@@ -36,7 +36,8 @@ class RawTaqDao(BaseModel):
             .alias("date")
         )
     
-    def detect_record_size(self, bin_path: Path, idx_df: pl.DataFrame) -> int:
+    @staticmethod
+    def detect_record_size(bin_path: Path, idx_df: pl.DataFrame) -> int:
         """Calculates the exact byte size of a single record for a given day."""
         with lz4.frame.open(bin_path, 'rb') as f:
             raw_bytes = f.read()
@@ -50,9 +51,9 @@ class RawTaqDao(BaseModel):
             
         return total_bytes // total_records
     
-    def load_data_for_day(self, date: dt.date, type: TaqType) -> pl.DataFrame:
-        taq_file = self.get_taq_file(date, type)
-        idx_df = self.load_taq_index(date, type)
+    def load_data_for_day(self, date: dt.date, type: TaqType, letter: str | None = "A") -> pl.DataFrame:
+        taq_file = self.get_taq_file(date, type, letter=letter)
+        idx_df = self.load_taq_index(date, type, letter=letter)
         
         meta = idx_df.filter(pl.col("date") == date).sort("start_idx")
         
@@ -268,7 +269,6 @@ class RawTaqDao(BaseModel):
         path = Path(f"{self.database.output_path}/taq/{folder}/{date.year}/{date.month:02d}/{date.strftime("%Y-%m-%d")}.parquet")
         if not self.database.is_connected():
             raise ValueError("Database is not connected")
-        
         
         self.upsert_as_parquet(df, path)
 

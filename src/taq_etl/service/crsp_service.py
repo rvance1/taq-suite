@@ -53,3 +53,9 @@ class CrspService(BaseModel):
             .sort(["date", "join_ticker", "priority"])
             .unique(subset=["date", "join_ticker"], keep="first")
         )
+
+        self._dao.save_parquet_interim(
+            df=crsp_mapping,
+            path="crsp_mapping",
+            name=f"crsp_mapping_{year}"
+        )

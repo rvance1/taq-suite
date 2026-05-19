@@ -2,6 +2,7 @@ from pydantic import BaseModel
 import datetime as dt
 import polars as pl
 from enum import StrEnum
+from pathlib import Path
 
 from taq_etl.dal.models.database import Database
 
@@ -35,3 +36,10 @@ class CrspDao(BaseModel):
             .sort(["date", "permno"])
             .collect()
         )
+    
+    def save_parquet_interim(self, df: pl.DataFrame, path: str, name: str) -> None:
+        base_path = Path(self.database.output_path) / path
+        base_path.mkdir(parents=True, exist_ok=True)
+
+        file_path = base_path / f"{name}.parquet"
+        df.write_parquet(file_path)

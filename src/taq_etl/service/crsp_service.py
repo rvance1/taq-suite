@@ -14,6 +14,9 @@ class CrspService(BaseModel):
 
     def build_crsp_map_by_year(self, year: int) -> None:
         crsp_raw = self._dao.load_crsp_by_year(year)
+        if crsp_raw.is_empty():
+            print(f"No CRSP data found for year: {year}")
+            return
 
         crsp = (
             crsp_raw.with_columns(
@@ -59,3 +62,8 @@ class CrspService(BaseModel):
             path="crsp_mapping",
             name=f"crsp_mapping_{year}"
         )
+
+    def build_crsp_map_by_range(self, start_year: int, end_year: int) -> None:
+        for year in range(start_year, end_year + 1):
+            self.build_crsp_map_by_year(year)
+            print(f"Completed CRSP mapping for year: {year}")

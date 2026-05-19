@@ -54,7 +54,7 @@ class CrspService(BaseModel):
         crsp_mapping = (
             pl.concat([p1, p2, p3])
             .sort(["date", "join_ticker", "priority"])
-            .unique(subset=["date", "join_ticker"], keep="first")
+            .unique(subset=["date", "join_ticker"], keep="first", maintain_order=True)
         )
 
         self._dao.save_parquet_interim(

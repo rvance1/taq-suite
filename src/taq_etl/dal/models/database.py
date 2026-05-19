@@ -18,3 +18,8 @@ class Database(BaseModel):
         if not self.is_connected():
             raise ValueError("Database is not connected")
         return TaqFile(root_path=self.raw_taq_path + "/taq", date=date, type=type, letter=letter)
+    
+    def get_crsp_masterfile_path(self) -> str:
+        if not self.is_connected():
+            raise ValueError("Database is not connected")
+        return self.raw_taq_path + "/crsp/crsp.parquet"

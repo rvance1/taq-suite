@@ -1,11 +1,16 @@
 from pydantic import BaseModel
 import datetime as dt
-import lz4.frame
-import numpy as np
 import polars as pl
-from pathlib import Path
+from enum import StrEnum
 
 from taq_etl.dal.models.database import Database
+
+
+class CrspColumn(StrEnum):
+    DATE = 'date'
+    PERMNO = 'permno'
+    TICKER = 'ticker'
+    SHARE_CLASS = 'share_class'
 
 
 class CrspDao(BaseModel):
@@ -18,6 +23,15 @@ class CrspDao(BaseModel):
             df.filter(
                 (pl.col("date") >= start_date) & (pl.col("date") <= end_date)
             )
+            .sort(["date", "permno"])
+            .collect()
+        )
+    
+    def load_crsp_by_year(self, year: int) -> pl.DataFrame:
+        crsp_file_path = self.database.get_crsp_masterfile_path()
+        df = pl.scan_parquet(crsp_file_path)
+        return (
+            df.filter(pl.col("date").dt.year() == year)
             .sort(["date", "permno"])
             .collect()
         )

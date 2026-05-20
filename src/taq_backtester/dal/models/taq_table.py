@@ -39,12 +39,30 @@ class TaqTable(BaseModel):
 
         return files_to_scan
     
-    def scan_date(self, date: dt.date, type: TaqType) -> pl.LazyFrame:
-        paths = self.__get_file_paths_by_day(date, type)
-        return pl.scan_parquet(paths)
+    def load_date(self, date: dt.date, type: TaqType) -> pl.DataFrame:
+        paths = [str(p) for p in self.__get_file_paths_by_day(date, type)]
+        if not paths:
+            return pl.DataFrame()
 
-    def scan_range(self, start_date: dt.date, end_date: dt.date, type: TaqType) -> pl.LazyFrame:
-        paths = self.__get_file_paths(start_date, end_date, type)
+        query = f"""
+            SELECT t.*, c.permno 
+            FROM read_parquet({paths}) t
+            LEFT JOIN crsp_map c 
+              ON t.ticker = c.join_ticker 
+             AND t.datetime::DATE = c.date
+        """
+        return self.conn.execute(query).pl()
+
+    def load_range(self, start_date: dt.date, end_date: dt.date, type: TaqType) -> pl.DataFrame:
+        paths = [str(p) for p in self.__get_file_paths(start_date, end_date, type)]
         if not paths:
             raise FileNotFoundError(f"No data found for range {start_date} to {end_date}")
-        return pl.scan_parquet(paths)
+        
+        query = f"""
+            SELECT t.*, c.permno 
+            FROM read_parquet({paths}) t
+            LEFT JOIN crsp_map c 
+              ON t.ticker = c.join_ticker 
+             AND t.datetime::DATE = c.date
+        """
+        return self.conn.execute(query).pl()

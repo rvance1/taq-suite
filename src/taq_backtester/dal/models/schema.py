@@ -4,6 +4,7 @@ from typing import TypeAlias
 
 class QuoteHistorySchema(dy.Schema):
     datetime = dy.Datetime(nullable=False)
+    permno = dy.Int64(nullable=True)
     ticker = dy.String(nullable=False)
     bid = dy.Float(nullable=False)
     ask = dy.Float(nullable=False)
@@ -13,6 +14,7 @@ class QuoteHistorySchema(dy.Schema):
 
 class TradeHistorySchema(dy.Schema):
     datetime = dy.Datetime(nullable=False)
+    permno = dy.Int64(nullable=True)
     ticker = dy.String(nullable=False)
     price = dy.Float(nullable=False)
     volume = dy.Int32(nullable=False)

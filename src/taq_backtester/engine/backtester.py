@@ -12,7 +12,6 @@ from taq_backtester.dal.models.schema import QuoteHistoryDf
 from .computations import compute_prices, compute_aum, compute_optimal_shares, compute_delta_shares, add_delta_shares
 
 
-# TODO: Add aum history, finish rebalance function
 class Backtester():
     def __init__(self, config: BTConfig, taq_dao: TaqDao):
         self.config = config
@@ -23,7 +22,7 @@ class Backtester():
         self.realized_holdings: SharesHistoryDf = pl.DataFrame({"datetime": pl.Series([], dtype=pl.Datetime), "ticker": pl.Series([], dtype=pl.String), "shares": pl.Series([], dtype=pl.Int64)})
         self.aum_history = {}
         
-    def _record_holdings(self, order_fills: SharesHistoryDf) -> None:
+    def _record_holdings(self) -> None:
         current_dt = dt.datetime.combine(self.current_date, dt.time(0, 0))
         holdings_snapshot: SharesHistoryDf = SharesHistorySchema.validate(
             self.holdings.with_columns(pl.lit(current_dt).alias("datetime"))
@@ -81,8 +80,9 @@ class Backtester():
             delta_shares=delta_shares
         )
 
+        #TODO: record this, we can use it to compute slippage and other metrics later on
         order_fills = SharesHistorySchema.validate(order_fills_raw.select(["datetime", "ticker", "shares"]))
-        self._record_holdings(order_fills)
+        self._record_holdings()
 
     def rebalance(self, optimal_weights_history: WeightsHistoryDf, execute_at: dt.time = dt.time(9, 5)) -> None:
         """Rebalances the portfolio based on the optimal weights for the given datetime."""

@@ -1,4 +1,4 @@
-# TAQ Backtester
+# TAQ Suite
 
 High-performance ETL pipeline for processing TAQ (Trade and Quote) financial data from binary formats into Parquet for analysis and backtesting.
 
@@ -126,13 +126,13 @@ taq-etl utils print-index-df -d 1993-01-04 -t CQ
 #### Print Index Grouped by Date
 
 ```bash
-taq-etl utils print-idx-by-date -d 1993-01-04 -t CT
+taq-etl utils print-index-by-date -d 1993-01-04 -t CT
 ```
 
 Groups the parsed index by date and prints a per-date summary including ticker count, record range, and total records.
 
 ```bash
-taq-etl utils print-idx-by-date -d 1993-01-04 -t CQ
+taq-etl utils print-index-by-date -d 1993-01-04 -t CQ
 ```
 
 ### Data Output

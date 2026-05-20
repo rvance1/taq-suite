@@ -23,17 +23,19 @@ class RawTaqDao(BaseModel):
             raw = f.read()
             idx_data = np.frombuffer(raw, dtype=IDX_DTYPE)
             
+        date_cast: pl.Expr
+        if date < dt.date(1999, 12,1):
+            date_cast = pl.col("date").cast(pl.String).str.pad_start(6, "0").str.to_date(format="%y%m%d")
+        else:
+            date_cast = pl.col("date").cast(pl.String).str.pad_start(6, "0").str.to_date(format="%Y%m%d")
+
         return pl.DataFrame({
             "ticker": [t.decode('latin-1').strip() for t in idx_data['ticker']],
             "date": idx_data['date'],
             "start_idx": idx_data['start_idx'],
             "end_idx": idx_data['end_idx']
         }).with_columns(
-            pl.col("date")
-            .cast(pl.String) 
-            .str.pad_start(6, "0")  
-            .str.to_date(format="%y%m%d") 
-            .alias("date")
+            date_cast
         )
     
     @staticmethod

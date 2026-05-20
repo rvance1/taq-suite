@@ -23,11 +23,7 @@ class RawTaqDao(BaseModel):
             raw = f.read()
             idx_data = np.frombuffer(raw, dtype=IDX_DTYPE)
             
-        date_cast: pl.Expr
-        if date < dt.date(1999, 12,1):
-            date_cast = pl.col("date").cast(pl.String).str.pad_start(6, "0").str.to_date(format="%y%m%d")
-        else:
-            date_cast = pl.col("date").cast(pl.String).str.pad_start(6, "0").str.to_date(format="%Y%m%d")
+        date_cast: pl.Expr = pl.col("date").cast(pl.String).str.pad_start(6, "0").str.to_date(format=taq_file.date_formatting)
 
         return pl.DataFrame({
             "ticker": [t.decode('latin-1').strip() for t in idx_data['ticker']],

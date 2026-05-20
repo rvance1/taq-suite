@@ -27,7 +27,7 @@ class TaqFile(BaseModel):
             t = t[-1]
             yp = y
 
-        if self.date < dt.date(1999, 12, 1):
+        if self.date < dt.date(2000,1,1):
             return f"taq{y}/{t}{yp}{m:02d}"
         else:
             return f"taq{y}/{m}/{t}{yp}{m:02d}"
@@ -49,3 +49,9 @@ class TaqFile(BaseModel):
     @property
     def bin_path(self) -> FilePath:
         return Path(f"{self.__create_base_path()}.BIN.lz4")
+    
+    @computed_field
+    @property
+    def date_formatting(self) -> FilePath:
+        return "%y%m%d" if self.date < dt.date(1999, 12, 1) else "%Y%m%d"
+    

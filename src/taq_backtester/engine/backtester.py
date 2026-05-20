@@ -3,7 +3,7 @@ import datetime as dt
 
 from .models.backtester_config import BTConfig
 from .models.schema import (
-    WeightsDf, SharesDf, SharesSchema, WeightsSchema, WeightsHistoryDf, WeightsHistorySchema, SharesHistoryDf, SharesHistorySchema
+    WeightsDf, SharesDf, WeightsSchema, WeightsHistoryDf, SharesHistoryDf, SharesHistorySchema
 )
 
 from taq_backtester.dal.dao.taq_dao import TaqDao

@@ -19,10 +19,17 @@ class TaqFile(BaseModel):
     def __create_prefix(self) -> str:
         y = self.date.year
         m = self.date.month
-        if self.date < dt.date(1999, 12, 1):
-            return f"taq{y}/{self.type}{y % 100:02d}{m:02d}"
+        t = self.type.value
+
+        if self.date < dt.date(1999,12,1):
+            y = f"{y % 100:02d}"
         else:
-            return f"taq{y}/{self.type[-1]}{y}{m:02d}"
+            t = t[-1]
+
+        if self.date < dt.date(1999, 12, 1):
+            return f"taq{y}/{t}{y}{m:02d}"
+        else:
+            return f"taq{y}/{m}/{t}{y}{m:02d}"
     
     def __create_base_path(self) -> str:
         if self.date.year > 1995:

@@ -1,4 +1,3 @@
-import polars as pl
 from typing import Union, List
 import datetime as dt
 
@@ -19,16 +18,14 @@ class TaqClient:
         ignore_warnings: bool = False
     ) -> TradeHistoryDf:
         """Fetches historical trades, joined with CRSP permno."""
-        
-        # 1. Pydantic validates user input, checks dates, and enforces volume limits
+
         query = TaqQuery(
             start_date=start_date, 
             end_date=end_date, 
             tickers=tickers, 
             ignore_warnings=ignore_warnings
         )
-        
-        # 2. Pass clean, validated data to the hidden engine
+
         return self._conn.execute_trade_query(query)
     
     def get_quotes(
@@ -39,14 +36,12 @@ class TaqClient:
         ignore_warnings: bool = False
     ) -> QuoteHistoryDf:
         """Fetches historical quotes, joined with CRSP permno."""
-        
-        # 1. Pydantic validates user input, checks dates, and enforces volume limits
+
         query = TaqQuery(
             start_date=start_date, 
             end_date=end_date, 
             tickers=tickers, 
             ignore_warnings=ignore_warnings
         )
-        
-        # 2. Pass clean, validated data to the hidden engine
+
         return self._conn.execute_trade_query(query)

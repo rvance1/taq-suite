@@ -44,4 +44,4 @@ class TaqClient:
             ignore_warnings=ignore_warnings
         )
 
-        return self._conn.execute_trade_query(query)
+        return self._conn.execute_quote_query(query)

@@ -1,4 +1,4 @@
-from click import Path
+from pathlib import Path
 import duckdb
 
 from taq_client.dal.paths import get_file_paths
@@ -49,9 +49,10 @@ class TaqDao:
             ticker_list = ", ".join([f"'{t}'" for t in query.tickers])
             ticker_filter = f"WHERE t.ticker IN ({ticker_list})"
 
+        path_strs = ", ".join(f"'{p}'" for p in paths)
         sql = f"""
             SELECT t.*, c.permno 
-            FROM read_parquet({paths}) t
+            FROM read_parquet([{path_strs}]) t
             LEFT JOIN crsp_map c 
               ON t.ticker = c.join_ticker 
              AND t.datetime::DATE = c.date
@@ -75,9 +76,10 @@ class TaqDao:
             ticker_list = ", ".join([f"'{t}'" for t in query.tickers])
             ticker_filter = f"WHERE t.ticker IN ({ticker_list})"
 
+        path_strs = ", ".join(f"'{p}'" for p in paths)
         sql = f"""
             SELECT t.*, c.permno 
-            FROM read_parquet({paths}) t
+            FROM read_parquet([{path_strs}]) t
             LEFT JOIN crsp_map c 
               ON t.ticker = c.join_ticker 
              AND t.datetime::DATE = c.date

@@ -17,7 +17,7 @@ def get_file_paths(
     root_path = Path(root_dir)
 
     while current_date <= end_date:
-        base_dir = root_path / str(taq_type) / str(current_date.year) / f"{current_date.month:02d}"
+        base_dir = root_path / "interim" / "taq" / str(taq_type) / str(current_date.year) / f"{current_date.month:02d}"
         date_str = current_date.strftime("%Y-%m-%d")
 
         single_file = base_dir / f"{date_str}.parquet"

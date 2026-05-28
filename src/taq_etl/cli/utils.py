@@ -45,11 +45,11 @@ def print_index(obj, date: dt.datetime, type: str):
     service: RawTaqService = obj['raw_taq']
     service.print_index_for_day(date.date(), TaqType(type))
 
-@utils_group.command(name="print-idx-by-date")
+@utils_group.command(name="print-index-by-date")
 @click.option("--date", "-d", type=click.DateTime(formats=["%Y-%m-%d"]), required=True)
 @click.option("--type", "-t", type=click.Choice(["CT", "CQ"]), required=True)
 @click.pass_obj
-def print_idx_by_date(obj, date: dt.datetime, type: str):
+def print_index_by_date(obj, date: dt.datetime, type: str):
     """Group the index by date and show per-date summary (ticker count, record range, total records)."""
     service: RawTaqService = obj['raw_taq']
-    service.print_idx_by_date(date.date(), TaqType(type))
+    service.print_index_by_date(date.date(), TaqType(type))

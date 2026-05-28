@@ -39,7 +39,7 @@ class RawTaqService(BaseModel):
         idx_df = self._dao.load_taq_index(date, type)
         print(idx_df)
 
-    def print_idx_by_date(self, date: dt.date, type: TaqType) -> None:
+    def print_index_by_date(self, date: dt.date, type: TaqType) -> None:
         idx_df = self._dao.load_taq_index(date, type)
         summary = idx_df.group_by("date").agg(
             pl.len().alias("num_tickers"),

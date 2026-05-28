@@ -1,7 +1,7 @@
 import duckdb
 import polars as pl
 from taq_client.dal.paths import get_file_paths
-from taq_client.models import TradeQuery
+from taq_client.models import TaqQuery
 
 class TaqDao:
     def __init__(self, db_path: str):
@@ -12,7 +12,7 @@ class TaqDao:
             SELECT * FROM read_parquet('{db_path}/interim/crsp_mapping/*.parquet')
         """)
 
-    def execute_trade_query(self, query: TradeQuery, db_path: str) -> pl.DataFrame:
+    def execute_trade_query(self, query: TaqQuery, db_path: str) -> pl.DataFrame:
         paths = get_file_paths(db_path, query.start_date, query.end_date, "trade")
         
         if not paths:

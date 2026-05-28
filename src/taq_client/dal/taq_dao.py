@@ -1,15 +1,29 @@
 from click import Path
 import duckdb
+
 from taq_client.dal.paths import get_file_paths
 from taq_client.models.exceptions import CrspMappingMissingError, DataMissingError
 from taq_client.models.taq_query import TaqQuery
 from taq_client.models.schema import QuoteHistoryDf, QuoteHistorySchema, TradeHistoryDf, TradeHistorySchema
 
 class TaqDao:
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str | None = None):
+        import os
+        
+        resolved_path = db_path or os.getenv("TAQ_DB_PATH")
+        if not resolved_path:
+            raise ValueError(
+                "Missing database path. Please provide a valid path via "
+                "the constructor or set the TAQ_DB_PATH environment variable."
+            )
+            
+        self.db_path = Path(resolved_path)
+        if not self.db_path.exists():
+            raise FileNotFoundError(f"Database path '{self.db_path}' does not exist.")
+        
         self.conn = duckdb.connect()
 
-        crsp_path = Path(db_path) / "interim" / "crsp_mapping"
+        crsp_path = Path(self.db_path) / "interim" / "crsp_mapping"
         if not crsp_path.exists() or not any(crsp_path.glob("*.parquet")):
             raise CrspMappingMissingError(
                 f"CRSP mapping data is missing or empty. "
@@ -18,11 +32,11 @@ class TaqDao:
         
         self.conn.execute(f"""
             CREATE OR REPLACE VIEW crsp_map AS 
-            SELECT * FROM read_parquet('{db_path}/interim/crsp_mapping/*.parquet')
+            SELECT * FROM read_parquet('{self.db_path}/interim/crsp_mapping/*.parquet')
         """)
 
-    def execute_trade_query(self, query: TaqQuery, db_path: str) -> TradeHistoryDf:
-        paths = get_file_paths(db_path, query.start_date, query.end_date, "trade")
+    def execute_trade_query(self, query: TaqQuery) -> TradeHistoryDf:
+        paths = get_file_paths(self.db_path, query.start_date, query.end_date, "trade")
         
         if not paths:
             raise DataMissingError(
@@ -47,8 +61,8 @@ class TaqDao:
         
         return TradeHistorySchema.validate(self.conn.execute(sql).pl())
     
-    def execute_quote_query(self, query: TaqQuery, db_path: str) -> QuoteHistoryDf:
-        paths = get_file_paths(db_path, query.start_date, query.end_date, "quote")
+    def execute_quote_query(self, query: TaqQuery) -> QuoteHistoryDf:
+        paths = get_file_paths(self.db_path, query.start_date, query.end_date, "quote")
         
         if not paths:
             raise DataMissingError(

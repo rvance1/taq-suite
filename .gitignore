@@ -61,4 +61,7 @@ data/
 *.sas7bdat
 *.parquet
 
+
+# --- Other ---
 dev-test/
+scripts/

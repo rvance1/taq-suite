@@ -1,7 +1,7 @@
 from click import Path
 import duckdb
 from taq_client.dal.paths import get_file_paths
-from taq_client.exceptions import CrspMappingMissingError, DataMissingError
+from taq_client.models.exceptions import CrspMappingMissingError, DataMissingError
 from taq_client.models.taq_query import TaqQuery
 from taq_client.models.schema import QuoteHistoryDf, QuoteHistorySchema, TradeHistoryDf, TradeHistorySchema
 

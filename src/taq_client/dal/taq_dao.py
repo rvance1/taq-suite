@@ -57,7 +57,7 @@ class TaqDao:
               ON t.ticker = c.join_ticker 
              AND t.datetime::DATE = c.date
             {ticker_filter}
-            ORDER BY t.datetime, t.ticker
+            ORDER BY t.ticker, t.datetime
         """
         
         return TradeHistorySchema.validate(self.conn.execute(sql).pl())
@@ -84,7 +84,7 @@ class TaqDao:
               ON t.ticker = c.join_ticker 
              AND t.datetime::DATE = c.date
             {ticker_filter}
-            ORDER BY t.datetime, t.ticker
+            ORDER BY t.ticker, t.datetime
         """
         
         return QuoteHistorySchema.validate(self.conn.execute(sql).pl())

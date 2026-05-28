@@ -2,8 +2,8 @@ from click import Path
 import duckdb
 from taq_client.dal.paths import get_file_paths
 from taq_client.exceptions import CrspMappingMissingError, DataMissingError
-from taq_client.validation_models import TaqQuery
-from taq_client.dal.models.schema import QuoteHistoryDf, QuoteHistorySchema, TradeHistoryDf, TradeHistorySchema
+from taq_client.models.taq_query import TaqQuery
+from taq_client.models.schema import QuoteHistoryDf, QuoteHistorySchema, TradeHistoryDf, TradeHistorySchema
 
 class TaqDao:
     def __init__(self, db_path: str):
@@ -52,7 +52,7 @@ class TaqDao:
         
         if not paths:
             raise DataMissingError(
-                f"No TAQ trade data found on disk for the requested range: "
+                f"No TAQ quote data found on disk for the requested range: "
                 f"{query.start_date} to {query.end_date}."
             )
 

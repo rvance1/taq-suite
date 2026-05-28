@@ -2,10 +2,6 @@ import datetime as dt
 from typing import List, Optional, Union
 from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 
-class DataVolumeError(ValueError):
-    """Custom exception raised when a query exceeds safe data volume thresholds."""
-    pass
-
 class TaqQuery(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     

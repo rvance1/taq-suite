@@ -1,15 +1,52 @@
 import polars as pl
+from typing import Union, List
 import datetime as dt
-from pathlib import Path
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import List, Union
+
+from taq_client.models.taq_query import TaqQuery
+from taq_client.dal.taq_dao import TaqDao
+from taq_client.models.schema import TradeHistoryDf, QuoteHistoryDf
 
 class TaqClient:
     def __init__(self, db_path: str | None = None):
-        import os
-        try:
-            self.db_path = Path(db_path or os.getenv("TAQ_DB_PATH"))
-        except Exception as e:
-            raise ValueError(f"TAQ_DB_PATH environment variable is not set and no db_path was provided. Please set TAQ_DB_PATH or provide a db_path argument. Original error: {e}")
-        if not self.db_path.exists():
-            raise FileNotFoundError(f"Database path {self.db_path} does not exist.")
+        """Initializes the DuckDB connection and mounts the CRSP map."""
+        self._conn = TaqDao(db_path=db_path)
+
+    def get_trades(
+        self, 
+        start_date: Union[dt.date, str], 
+        end_date: Union[dt.date, str], 
+        tickers: Union[str, List[str]] = [],
+        ignore_warnings: bool = False
+    ) -> TradeHistoryDf:
+        """Fetches historical trades, joined with CRSP permno."""
+        
+        # 1. Pydantic validates user input, checks dates, and enforces volume limits
+        query = TaqQuery(
+            start_date=start_date, 
+            end_date=end_date, 
+            tickers=tickers, 
+            ignore_warnings=ignore_warnings
+        )
+        
+        # 2. Pass clean, validated data to the hidden engine
+        return self._conn.execute_trade_query(query)
+    
+    def get_quotes(
+        self, 
+        start_date: Union[dt.date, str], 
+        end_date: Union[dt.date, str], 
+        tickers: Union[str, List[str]] = [],
+        ignore_warnings: bool = False
+    ) -> QuoteHistoryDf:
+        """Fetches historical quotes, joined with CRSP permno."""
+        
+        # 1. Pydantic validates user input, checks dates, and enforces volume limits
+        query = TaqQuery(
+            start_date=start_date, 
+            end_date=end_date, 
+            tickers=tickers, 
+            ignore_warnings=ignore_warnings
+        )
+        
+        # 2. Pass clean, validated data to the hidden engine
+        return self._conn.execute_trade_query(query)

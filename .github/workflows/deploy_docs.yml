@@ -1,0 +1,34 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main  # Trigger deployment whenever code is pushed to the main branch
+
+permissions:
+  contents: write  # Allows the action to write compiled HTML to the gh-pages branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install dependencies
+        # Syncs your modules and doc tools so mkdocstrings can map your code
+        run: uv sync --all-groups
+
+      - name: Deploy to GitHub Pages
+        # Automatically builds the 'site/' directory and pushes it to gh-pages branch
+        run: uv run mkdocs gh-deploy --force

@@ -14,7 +14,7 @@ The platform is explicitly separated into three decoupled modules, enforcing a s
                                 Raw TAQ    
                               (.BIN/.IDX)  
                                    │
-                                   ▼
+                                
                     ┌──────────────────────────────┐
                     │           taq-etl            │
                     └──────────────────────────────┘
@@ -27,19 +27,19 @@ The platform is explicitly separated into three decoupled modules, enforcing a s
                                 Database       
                        (Parquet Partition Grid)  
                                    │
-             ┌─────────────────────┴───────────────────────┐
-             ▼                                             ▼
-┌───────────────────────────────┐               ┌───────────────────────────────┐
-│          taq-client           │               │        taq-backtester         │
-└───────────────────────────────┘               └───────────────────────────────┘
-│  • User-Facing Read SDK       │               │  • Stateful Simulation Engine │
-│  • Pydantic Query Guardrails  │               │  • Native dataframely Schemas │
-│  • Returns Polars DataFrames  │               │  • Point-in-Time Executions   │
-└──────────────┬────────────────┘               └──────────────┬────────────────┘
-               │                                               │
-               ▼                                               ▼
-        Jupyter Notebook                                Alpha Execution   
-         & Research Dfs                                   & Backtests     
+                ┌──────────────────┴────────────────────────┐
+                ▼                                           ▼
+┌───────────────────────────────┐             ┌───────────────────────────────┐
+│          taq-client           │             │        taq-backtester         │
+└───────────────────────────────┘             └───────────────────────────────┘
+│  • User-Facing Read SDK       │             │  • Stateful Simulation Engine │
+│  • Pydantic Query Guardrails  │             │  • Native dataframely Schemas │
+│  • Returns Polars DataFrames  │             │  • Point-in-Time Executions   │
+└──────────────┬────────────────┘             └──────────────┬────────────────┘
+               │                                             │
+               ▼                                             ▼
+        Jupyter Notebook                              Alpha Execution   
+         & Research Dfs                                 & Backtests     
 ```
 
 ### 1. 🛠️ `taq-etl`

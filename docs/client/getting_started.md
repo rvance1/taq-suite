@@ -36,8 +36,8 @@ import datetime as dt
 client = tc.connect()
 
 # 2. Define your historical observation parameters
-start = "1999-01-04"
-end = "1999-01-05"
+start = dt.date(1999,1,4)
+end = dt.date(1999,1,5)
 target_tickers = ["AAPL", "MSFT", "INTC"]
 
 # 3. Pull the joined Trade executions grid

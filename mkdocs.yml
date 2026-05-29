@@ -32,3 +32,8 @@ nav:
   - For Developers (Architecture):
       - TAQ ETL: dev/etl.md
       - Backtester: dev/backtester.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

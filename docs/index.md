@@ -11,41 +11,35 @@ The suite is engineered using **DuckDB**, **Polars**, and **Apache Arrow** to de
 The platform is explicitly separated into three decoupled modules, enforcing a strict boundary between engineering, simulation, and interactive analysis.
 
 ```text
-                           ┌───────────────┐
-                           │    Raw TAQ    │
-                           │  (.BIN/.IDX)  │
-                           └───────┬───────┘
+                                Raw TAQ    
+                              (.BIN/.IDX)  
                                    │
                                    ▼
                     ┌──────────────────────────────┐
                     │           taq-etl            │
-                    │ ───────────────────────────  │
+                    └──────────────────────────────┘
                     │ • Decompresses .lz4 logs     │
                     │ • Parses binary struct arrays│
                     │ • Outputs structured grids   │
                     └──────────────┬───────────────┘
                                    │
                                    ▼
-                     ┌───────────────────────────┐
-                     │       Database Root       │
-                     │ (Parquet Partition Grid)  │
-                     └─────────────┬─────────────┘
+                                Database       
+                       (Parquet Partition Grid)  
                                    │
              ┌─────────────────────┴───────────────────────┐
              ▼                                             ▼
 ┌───────────────────────────────┐               ┌───────────────────────────────┐
 │          taq-client           │               │        taq-backtester         │
-│ ───────────────────────────── │               │ ───────────────────────────── │
+└───────────────────────────────┘               └───────────────────────────────┘
 │  • User-Facing Read SDK       │               │  • Stateful Simulation Engine │
 │  • Pydantic Query Guardrails  │               │  • Native dataframely Schemas │
-│  • Returns Polars LazyFrames  │               │  • Point-in-Time Executions   │
+│  • Returns Polars DataFrames  │               │  • Point-in-Time Executions   │
 └──────────────┬────────────────┘               └──────────────┬────────────────┘
                │                                               │
                ▼                                               ▼
-     ┌──────────────────┐                            ┌──────────────────┐
-     │ Jupyter Notebook │                            │ Alpha Execution  │
-     │  & Research Dfs  │                            │   & Backtests    │
-     └──────────────────┘                            └──────────────────┘
+        Jupyter Notebook                                Alpha Execution   
+         & Research Dfs                                   & Backtests     
 ```
 
 ### 1. 🛠️ `taq-etl`

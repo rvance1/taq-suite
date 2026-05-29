@@ -28,7 +28,7 @@ The simulator transforms theoretical allocation weights into concrete historical
 
 ```text
  ┌─────────────────────────────┐
- │    WeightsHistoryDf         │  <-- 1. Input: Continuous target allocation signals
+ │    WeightsHistoryDf         │  <-- 1. Input: Daily target weights
  └──────────────┬──────────────┘
                 │
                 ▼
@@ -40,8 +40,8 @@ The simulator transforms theoretical allocation weights into concrete historical
         ┌───────┴───────┐
         ▼               ▼
  ┌─────────────┐ ┌─────────────┐
- │ Realized    │ │ AUM History │  <-- 3. Output: Time-series tracking vectors 
- │ Weights     │ │  Over Time  │         of execution vectors and equity curves
+ │ Realized    │ │ AUM History │  <-- 3. Output: Time-series weights achieved 
+ │ Weights     │ │  Over Time  │         from the simulated order fills
  └─────────────┘ └─────────────┘
 ```
 
